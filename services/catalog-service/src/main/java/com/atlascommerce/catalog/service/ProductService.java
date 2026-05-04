@@ -41,6 +41,31 @@ public class ProductService {
 
         return toResponse(product);
     }
+    
+    public ProductResponse update(Long id, CreateProductRequest request) {
+        ProductEntity product = findEntityById(id);
+        applyRequest(product, request);
+
+        ProductEntity saved = productRepository.save(product);
+        return toResponse(saved);
+    }
+
+    public void delete(Long id) {
+        ProductEntity product = findEntityById(id);
+        productRepository.delete(product);
+    }
+
+    private ProductEntity findEntityById(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+    }
+
+    private void applyRequest(ProductEntity entity, CreateProductRequest request) {
+        entity.setName(request.getName());
+        entity.setDescription(request.getDescription());
+        entity.setPrice(request.getPrice());
+        entity.setStock(request.getStock());
+    }
 
     private ProductResponse toResponse(ProductEntity entity) {
         return new ProductResponse(
