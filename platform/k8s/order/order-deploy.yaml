@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order
+  namespace: atlas
+  labels:
+    app: order
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order
+  template:
+    metadata:
+      labels:
+        app: order
+        tier: backend
+        version: v1
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: order
+        image: nitros64/order-service:1.0.1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8083
+          name: http
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: docker
+
+        - name: JAVA_TOOL_OPTIONS
+          value: "-XX:MaxRAMPercentage=60.0 -XX:InitialRAMPercentage=25.0"
+
+        # DB
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:postgresql://postgres-order:5432/orderdb
+
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: postgres-order-secret
+              key: POSTGRES_USER
+
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-order-secret
+              key: POSTGRES_PASSWORD
+
+        - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+          value: org.postgresql.Driver
+
+        # Redis
+        - name: SPRING_DATA_REDIS_HOST
+          value: redis
+
+        - name: SPRING_DATA_REDIS_PORT
+          value: "6379"
+
+        - name: SPRING_DATA_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret
+              key: REDIS_PASSWORD  
+
+        # JWT
+        - name: SECURITY_JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: SECURITY_JWT_SECRET      
+
+        # RABBITMQ
+        - name: SPRING_RABBITMQ_HOST
+          value: rabbitmq-svc
+
+        - name: SPRING_RABBITMQ_PORT
+          value: "5672"
+
+        - name: SPRING_RABBITMQ_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: RABBITMQ_DEFAULT_USER
+
+        - name: SPRING_RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: RABBITMQ_DEFAULT_PASS        
+
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+
+        startupProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8083
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 24
+
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8083
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 2
+
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8083
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2
