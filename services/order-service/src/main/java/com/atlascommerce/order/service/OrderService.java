@@ -10,6 +10,7 @@ import com.atlascommerce.order.event.OrderCreatedEvent;
 import com.atlascommerce.order.messaging.OrderEventPublisher;
 import com.atlascommerce.order.repository.OrderRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -80,6 +81,7 @@ public class OrderService {
         return toResponse(saved);
     }
 
+    @Transactional(readOnly = true)
     public List<OrderResponse> findAll() {
         return orderRepository.findAll()
                 .stream()
@@ -87,6 +89,7 @@ public class OrderService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public OrderResponse findById(Long id) {
         OrderEntity order = orderRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found"));
