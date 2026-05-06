@@ -1,3 +1,10 @@
+![Java](https://img.shields.io/badge/Java-21-red)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-CKAD-blue)
+![Docker](https://img.shields.io/badge/Docker-Enabled-blue)
+![CI](https://img.shields.io/badge/CI-GitHub%20Actions-black)
+![License](https://img.shields.io/badge/Status-Active-success)
+
 # Atlas Commerce Platform
 
 Cloud-native microservices platform built with **Spring Boot** and **Kubernetes**, designed to demonstrate production-grade backend, security, and DevOps practices.
@@ -89,12 +96,49 @@ Each service is deployed with:
 * **Secret (credentials, JWT)**
 * **Probes (startup, liveness, readiness)**
 * **Resource limits**
+* **NGINX Ingress**
+
 
 ### Infrastructure components:
 
 * PostgreSQL (StatefulSet)
 * Redis (blacklist / caching)
 * RabbitMQ (event broker)
+* NGINX Ingress Controller
+
+---
+
+## 📊 Observability
+
+Atlas Commerce includes production-style observability tooling:
+
+* Prometheus metrics scraping
+* Spring Boot Actuator integration
+* Grafana dashboards
+* Kubernetes health probes
+* Service-level monitoring
+
+Future additions:
+
+* OpenTelemetry
+* Distributed tracing
+* Loki log aggregation
+
+---
+
+## 🔄 CI/CD
+
+GitHub Actions pipelines validate:
+
+* Maven build
+* Unit tests
+* Docker image builds
+
+Future pipeline stages:
+
+* Docker Hub publishing
+* Kubernetes deployment
+* EKS rollout
 
 ---
 
