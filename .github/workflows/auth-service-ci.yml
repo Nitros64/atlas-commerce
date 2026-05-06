@@ -43,6 +43,9 @@ jobs:
       - name: Build and test with Maven
         run: mvn clean verify -B --no-transfer-progress
 
+      - name: Build Docker image
+        run: docker build -t auth-service:ci .  
+
       - name: Test Report
         uses: dorny/test-reporter@v1
         if: always()
