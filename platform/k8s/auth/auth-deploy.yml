@@ -27,7 +27,7 @@ spec:
       terminationGracePeriodSeconds: 30      
       containers:
       - name: auth
-        image: nitros64/auth-service:1.0.8
+        image: nitros64/auth-service:1.0.9
         imagePullPolicy: Always
         ports:
         - containerPort: 8081
