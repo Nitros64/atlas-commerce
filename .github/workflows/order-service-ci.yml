@@ -1,16 +1,16 @@
-name: Auth Service CI
+name: Order Service CI
 
 on:
   push:
-    branches: [master, "main", "develop" ]
+    branches: ["master", "main", "develop" ]
     paths:
-      - "services/auth-service/**"
-      - ".github/workflows/auth-service-ci.yml"
+      - "services/order-service/**"
+      - ".github/workflows/order-service-ci.yml"
   pull_request:
     branches: ["master", "main", "develop" ]
     paths:
-      - "services/auth-service/**"
-      - ".github/workflows/auth-service-ci.yml"
+      - "services/order-service/**"
+      - ".github/workflows/order-service-ci.yml"
 
 permissions:
   contents: read
@@ -22,12 +22,12 @@ concurrency:
 
 jobs:
   build-and-test:
-    name: Build and Test Auth Service
+    name: Build and Test Order Service
     runs-on: ubuntu-latest
 
     defaults:
       run:
-        working-directory: services/auth-service
+        working-directory: services/order-service
 
     steps:
       - name: Checkout repository
@@ -44,12 +44,12 @@ jobs:
         run: mvn clean verify -B --no-transfer-progress
 
       - name: Build Docker image
-        run: docker build -t auth-service:ci .  
+        run: docker build -t order-service:ci .  
 
       - name: Test Report
         uses: dorny/test-reporter@v1
         if: always()
         with:
-          name: Auth Service Tests
-          path: services/auth-service/target/surefire-reports/*.xml
+          name: Order Service Tests
+          path: services/order-service/target/surefire-reports/*.xml
           reporter: java-junit
