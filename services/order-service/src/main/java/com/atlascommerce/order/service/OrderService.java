@@ -7,7 +7,7 @@ import com.atlascommerce.order.dto.OrderResponse;
 import com.atlascommerce.order.entity.OrderEntity;
 import com.atlascommerce.order.entity.OrderItemEntity;
 import com.atlascommerce.order.event.OrderCreatedEvent;
-import com.atlascommerce.order.messaging.OrderEventPublisher;
+import com.atlascommerce.order.event.OrderEventPublisher;
 import com.atlascommerce.order.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +24,7 @@ public class OrderService {
 
     public OrderService(OrderRepository orderRepository, OrderEventPublisher orderEventPublisher) {
         this.orderRepository = orderRepository;
-        this.orderEventPublisher = orderEventPublisher;
-        
+        this.orderEventPublisher = orderEventPublisher;        
     }
 
     public OrderResponse create(CreateOrderRequest request) {
