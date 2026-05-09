@@ -20,22 +20,24 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: order
-        image: nitros64/order-service:1.0.3
+        image: nitros64/order-service:1.0.4
         imagePullPolicy: Always
         ports:
         - containerPort: 8083
           name: http
+        envFrom:
+        - configMapRef:
+            name: cm-order  
+        - configMapRef:
+            name: cm-redis  
+        - configMapRef:
+            name: cm-kafka
+                
         env:
-        - name: SPRING_PROFILES_ACTIVE
-          value: docker
-
         - name: JAVA_TOOL_OPTIONS
-          value: "-XX:MaxRAMPercentage=60.0 -XX:InitialRAMPercentage=25.0"
+          value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=60.0 -XX:InitialRAMPercentage=25.0"
 
         # DB
-        - name: SPRING_DATASOURCE_URL
-          value: jdbc:postgresql://postgres-order:5432/orderdb
-
         - name: SPRING_DATASOURCE_USERNAME
           valueFrom:
             secretKeyRef:
@@ -48,16 +50,7 @@ spec:
               name: postgres-order-secret
               key: POSTGRES_PASSWORD
 
-        - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
-          value: org.postgresql.Driver
-
         # Redis
-        - name: SPRING_DATA_REDIS_HOST
-          value: redis
-
-        - name: SPRING_DATA_REDIS_PORT
-          value: "6379"
-
         - name: SPRING_DATA_REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -72,12 +65,6 @@ spec:
               key: SECURITY_JWT_SECRET      
 
         # RABBITMQ
-        - name: SPRING_RABBITMQ_HOST
-          value: rabbitmq-svc
-
-        - name: SPRING_RABBITMQ_PORT
-          value: "5672"
-
         - name: SPRING_RABBITMQ_USERNAME
           valueFrom:
             secretKeyRef:

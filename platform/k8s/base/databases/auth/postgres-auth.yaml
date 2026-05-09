@@ -7,7 +7,7 @@ spec:
   selector:
     matchLabels:
       app: postgres-auth 
-  serviceName: postgres-svc
+  serviceName: postgres-auth-headless
   replicas: 1 
   minReadySeconds: 10
   template:

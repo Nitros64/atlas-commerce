@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-kafka
+  namespace: atlas
+data:
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  ORDER_EVENTS_TOPIC: order-events

@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres-svc
+  name: postgres-catalog-headless
   namespace: atlas
 spec:
   clusterIP: None
   selector:
-    app: postgres-auth
+    app: postgres-catalog
   ports:
   - name: postgres
     port: 5432

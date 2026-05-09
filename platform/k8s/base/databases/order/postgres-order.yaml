@@ -1,47 +1,53 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: postgres-catalog
+  name: postgres-order
   namespace: atlas
 spec:
-  serviceName: postgres-catalog
+  serviceName: postgres-order-headless
   replicas: 1
   minReadySeconds: 10
   selector:
     matchLabels:
-      app: postgres-catalog
+      app: postgres-order
   template:
     metadata:
       labels:
-        app: postgres-catalog
+        app: postgres-order
     spec:
       terminationGracePeriodSeconds: 10
       containers:
-      - name: postgres-catalog
+      - name: postgres-order
         image: postgres:16
         imagePullPolicy: IfNotPresent
+
         ports:
         - containerPort: 5432
           name: postgres
+
         env:
         - name: POSTGRES_DB
           valueFrom:
             secretKeyRef:
-              name: postgres-catalog-secret
+              name: postgres-order-secret
               key: POSTGRES_DB
+
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
-              name: postgres-catalog-secret
+              name: postgres-order-secret
               key: POSTGRES_USER
+
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: postgres-catalog-secret
+              name: postgres-order-secret
               key: POSTGRES_PASSWORD
+
         volumeMounts:
         - name: data
           mountPath: /var/lib/postgresql/data
+
   volumeClaimTemplates:
   - metadata:
       name: data
