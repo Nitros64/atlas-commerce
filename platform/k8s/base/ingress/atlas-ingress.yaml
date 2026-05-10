@@ -17,7 +17,7 @@ spec:
           service:
             name: auth-service
             port:
-              number: 8081
+              number: 80
 
       - path: /api/v1/products
         pathType: Prefix
@@ -25,7 +25,7 @@ spec:
           service:
             name: catalog-service
             port:
-              number: 8082
+              number: 80
 
       - path: /api/v1/orders
         pathType: Prefix
@@ -33,4 +33,4 @@ spec:
           service:
             name: order-service
             port:
-              number: 8083
+              number: 80
