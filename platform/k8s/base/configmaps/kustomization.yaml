@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - cm-auth-spring-datasource.yaml
+  - cm-auth.yaml
+  - cm-catalog.yaml
+  - cm-kafka.yaml
+  - cm-order.yaml
+  - cm-redis.yaml
