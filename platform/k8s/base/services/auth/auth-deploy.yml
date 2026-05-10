@@ -33,10 +33,7 @@ spec:
         - containerPort: 8081
         env:
           - name: JAVA_TOOL_OPTIONS
-            value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=60.0 -XX:InitialRAMPercentage=25.0"
-
-          - name: SPRING_PROFILES_ACTIVE
-            value: docker   
+            value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=60.0 -XX:InitialRAMPercentage=25.0"  
         envFrom:
           - configMapRef: #DB
               name: cm-auth-spring-datasource
