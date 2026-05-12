@@ -1,0 +1,11 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-only
+  namespace: atlas
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - {}   # Esto permite TODO el egress temporalmente (para debug)

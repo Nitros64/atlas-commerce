@@ -1,59 +1,59 @@
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-auth-egress-to-postgres-auth
-  namespace: atlas
-spec:
-  podSelector:
-    matchLabels:
-      app: auth
-  policyTypes:
-    - Egress
-  egress:
-    - to:
-        - podSelector:
-            matchLabels:
-              app: postgres-auth
-      ports:
-        - protocol: TCP
-          port: 5432
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-catalog-egress-to-postgres-catalog
-  namespace: atlas
-spec:
-  podSelector:
-    matchLabels:
-      app: catalog
-  policyTypes:
-    - Egress
-  egress:
-    - to:
-        - podSelector:
-            matchLabels:
-              app: postgres-catalog
-      ports:
-        - protocol: TCP
-          port: 5432
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-order-egress-to-postgres-order
-  namespace: atlas
-spec:
-  podSelector:
-    matchLabels:
-      app: order
-  policyTypes:
-    - Egress
-  egress:
-    - to:
-        - podSelector:
-            matchLabels:
-              app: postgres-order
-      ports:
-        - protocol: TCP
-          port: 5432
+# apiVersion: networking.k8s.io/v1
+# kind: NetworkPolicy
+# metadata:
+#   name: allow-auth-egress-to-postgres-auth
+#   namespace: atlas
+# spec:
+#   podSelector:
+#     matchLabels:
+#       app: auth
+#   policyTypes:
+#     - Egress
+#   egress:
+#     - to:
+#         - podSelector:
+#             matchLabels:
+#               app: postgres-auth
+#       ports:
+#         - protocol: TCP
+#           port: 5432
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: NetworkPolicy
+# metadata:
+#   name: allow-catalog-egress-to-postgres-catalog
+#   namespace: atlas
+# spec:
+#   podSelector:
+#     matchLabels:
+#       app: catalog
+#   policyTypes:
+#     - Egress
+#   egress:
+#     - to:
+#         - podSelector:
+#             matchLabels:
+#               app: postgres-catalog
+#       ports:
+#         - protocol: TCP
+#           port: 5432
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: NetworkPolicy
+# metadata:
+#   name: allow-order-egress-to-postgres-order
+#   namespace: atlas
+# spec:
+#   podSelector:
+#     matchLabels:
+#       app: order
+#   policyTypes:
+#     - Egress
+#   egress:
+#     - to:
+#         - podSelector:
+#             matchLabels:
+#               app: postgres-order
+#       ports:
+#         - protocol: TCP
+#           port: 5432
