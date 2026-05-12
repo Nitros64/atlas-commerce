@@ -13,7 +13,8 @@ resources:
   - services/auth
   - services/catalog
   - services/order
+  - services/gateway
   - ingress
   - observability/prometheus
   - observability/grafana
-  - network-policies
+  # - network-policies
