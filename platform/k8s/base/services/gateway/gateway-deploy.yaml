@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: nitros64/api-gateway:1.0.4
+          image: nitros64/api-gateway:1.0.9
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
@@ -26,11 +26,20 @@ spec:
             - name: SPRING_PROFILES_ACTIVE
               value: k8s
 
+            - name: SPRING_DATA_REDIS_HOST
+              value: redis
+
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"  
+
             - name: SPRING_DATA_REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: redis-secret
                   key: REDIS_PASSWORD  
+
+            - name: MANAGEMENT_HEALTH_REDIS_ENABLED
+              value: "false"      
 
           resources:
             requests:
@@ -46,6 +55,7 @@ spec:
               port: 8080
             initialDelaySeconds: 20
             periodSeconds: 10
+            timeoutSeconds: 5
 
           livenessProbe:
             httpGet:
@@ -53,6 +63,7 @@ spec:
               port: 8080
             initialDelaySeconds: 30
             periodSeconds: 15
+            timeoutSeconds: 5
 
           startupProbe:
             httpGet:
@@ -60,3 +71,4 @@ spec:
               port: 8080
             failureThreshold: 30
             periodSeconds: 5
+            timeoutSeconds: 5

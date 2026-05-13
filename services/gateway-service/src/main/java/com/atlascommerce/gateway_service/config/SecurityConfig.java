@@ -13,17 +13,16 @@ public class SecurityConfig {
 
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-
                 .authorizeExchange(exchange -> exchange
 
                         .pathMatchers(
                                 "/actuator/**",
-                                "/api/v1/auth/**"
+                                "/api/v1/auth/**",
+                                "/rate-limit-test/**"
                         ).permitAll()
 
                         .anyExchange().authenticated()
                 )
-
                 .build();
     }
 }

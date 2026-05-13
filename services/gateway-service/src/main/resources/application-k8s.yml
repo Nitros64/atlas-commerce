@@ -7,8 +7,11 @@ spring:
 
   data:
     redis:
-      host: redis
-      port: 6379
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD}
+      connect-timeout: 10s
+      timeout: 10s
 
   cloud:
     gateway:
@@ -19,7 +22,12 @@ spring:
               uri: http://auth-service
               predicates:
                 - Path=/api/v1/auth/**
-
+              filters:
+              - StripPrefix=0
+              - name: RequestRateLimiter
+                args:
+                  keyResolver: "#{@ipKeyResolver}"
+                  rateLimiter: "#{@redisRateLimiter}"   
             - id: catalog-service
               uri: http://catalog-service
               predicates:
@@ -28,7 +36,7 @@ spring:
             - id: order-service
               uri: http://order-service
               predicates:
-                - Path=/api/v1/orders/**
+                - Path=/api/v1/orders/**      
 
 logging:
   level:
@@ -45,5 +53,7 @@ management:
       show-details: always
 
   health:
+    redis:
+        enabled: false
     probes:
-      enabled: true
+      enabled: false
