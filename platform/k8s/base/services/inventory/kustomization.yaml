@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: atlas
+
+resources:
+  - postgres-inventory-secret.yaml
+  - postgres-inventory-service.yaml
+  - postgres-inventory-statefulset.yaml
+  - inventory-configmap.yaml
+  - inventory-secret.yaml
+  - inventory-deployment.yaml
+  - inventory-service.yaml
+  - networkpolicy.yaml
+  - postgres-networkpolicy.yaml

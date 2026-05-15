@@ -18,7 +18,7 @@ public class SecurityConfig {
                         .pathMatchers(
                                 "/actuator/**",
                                 "/api/v1/auth/**",
-                                "/rate-limit-test/**"
+                                "/api/v1/inventory/**"
                         ).permitAll()
 
                         .anyExchange().authenticated()

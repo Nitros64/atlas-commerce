@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-inventory-netpol
+  namespace: atlas
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres-inventory
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: inventory
+      ports:
+        - protocol: TCP
+          port: 5432

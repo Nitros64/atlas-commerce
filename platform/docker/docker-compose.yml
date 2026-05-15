@@ -119,6 +119,22 @@ services:
       retries: 10
     networks:
       - atlas-network
+  postgres-inventory:
+    image: postgres:17
+    container_name: postgres-inventory
+    environment:
+      POSTGRES_DB: inventorydb
+      POSTGRES_USER: inventory
+      POSTGRES_PASSWORD: inventory123
+    ports:
+      - "5436:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inventory"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - atlas-network    
 
   auth-service:
     build:
@@ -217,7 +233,28 @@ services:
     networks:
       - atlas-network
   
+  inventory-service:
+    build:
+      context: ../../services/inventory-service
+      dockerfile: Dockerfile
+    container_name: inventory-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
 
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-inventory:5432/inventorydb
+      SPRING_DATASOURCE_USERNAME: inventory
+      SPRING_DATASOURCE_PASSWORD: inventory123
+      SECURITY_JWT_SECRET: 9P6jcBxWjc9PSAyV5kL21aA6Y1Y1ijlcONXazdXRWf+UHWJWpjPj7nlWTHq0fjKSOKJyt9NaV7Z7AQmW60B2D2hjd9m3/emdO5Aa7aNjVxpzKWvld6EepPDWlTsfpV4l
+
+    ports:
+      - "8084:8084"
+
+    depends_on:
+      postgres-inventory:
+        condition: service_healthy
+
+    networks:
+      - atlas-network
 volumes:
   postgres_auth_data:
   postgres_catalog_data:

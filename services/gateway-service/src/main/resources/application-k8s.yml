@@ -38,6 +38,11 @@ spring:
               predicates:
                 - Path=/api/v1/orders/**      
 
+            - id: inventory-service
+              uri: http://inventory-service:8084
+              predicates:
+                - Path=/api/v1/inventory/**    
+
 logging:
   level:
     org.springframework.cloud.gateway: TRACE
