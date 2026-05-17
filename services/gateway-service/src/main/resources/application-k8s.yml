@@ -50,6 +50,11 @@ spring:
               predicates:
                 - Path=/api/v1/carts/**    
 
+            - id: pricing-service
+              uri: http://pricing-service
+              predicates:
+                - Path=/api/v1/pricing/**    
+
 security:
   jwt:
     secret: ${SECURITY_JWT_SECRET}    

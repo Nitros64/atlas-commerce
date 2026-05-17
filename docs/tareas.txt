@@ -1,0 +1,7 @@
+✔ calcular precio final
+✔ impuestos
+✔ descuentos
+✔ precios dinámicos
+✔ currency support
+✔ subtotal
+✔ total

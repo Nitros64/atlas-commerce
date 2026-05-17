@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pricing
+  labels:
+    app: pricing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pricing
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: pricing
+        component: backend
+    spec:
+      containers:
+        - name: pricing
+          image: nitros64/pricing-service:1.0.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8086
+              name: http
+          envFrom:
+            - configMapRef:
+                name: pricing-config
+            - secretRef:
+                name: jwt-secret
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8086
+            failureThreshold: 30
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8086
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8086
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
