@@ -1,0 +1,30 @@
+catalog-service
+= qué productos existen
+
+inventory-service
+= cuántas unidades hay disponibles de cada producto
+
+order-service
+= qué compra hizo el usuario
+
+Ejemplo:
+
+	catalog:
+	productId 101 = Keyboard Logitech, precio base, categoría, descripción
+
+	inventory:
+	productId 101 = 50 disponibles, 0 reservados, almacén Madrid
+
+	order:
+	usuario 1 compró 2 unidades del productId 101
+
+
+
+Flujo ideal:
+	1. order-service recibe una orden.
+	2. order-service valida que el producto existe en catalog-service.
+	3. order-service pide a inventory-service reservar stock.
+	4. Si inventory reserva OK, la orden queda PENDING/RESERVED.
+	5. Luego payment-service cobra.
+	6. Si payment OK, inventory hace decrease/commit del stock.
+	7. Si payment falla, inventory hace release del stock.

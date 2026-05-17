@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: inventory
+  name: cart
   labels:
-    app: inventory
+    app: cart
 spec:
   replicas: 1
   strategy:
@@ -13,41 +13,41 @@ spec:
       maxSurge: 1
   selector:
     matchLabels:
-      app: inventory
+      app: cart
   template:
     metadata:
       labels:
-        app: inventory
+        app: cart
         component: backend
     spec:
       containers:
-        - name: inventory
-          image: nitros64/inventory-service:1.0.1
+        - name: cart
+          image: nitros64/cart-service:1.0.1
           imagePullPolicy: Always
           ports:
-            - containerPort: 8084
+            - containerPort: 8085
               name: http
           envFrom:
             - configMapRef:
-                name: inventory-config
+                name: cart-config
             - secretRef:
-                name: inventory-secret
+                name: cart-secret
           startupProbe:
             httpGet:
               path: /actuator/health
-              port: 8084
+              port: 8085
             failureThreshold: 30
             periodSeconds: 5
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
-              port: 8084
+              port: 8085
             initialDelaySeconds: 20
             periodSeconds: 20
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
-              port: 8084
+              port: 8085
             initialDelaySeconds: 10
             periodSeconds: 10
           resources:

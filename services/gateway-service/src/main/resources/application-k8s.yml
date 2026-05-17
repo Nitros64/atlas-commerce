@@ -13,6 +13,8 @@ spring:
       connect-timeout: 10s
       timeout: 10s
 
+  
+
   cloud:
     gateway:
       server:
@@ -39,10 +41,19 @@ spring:
                 - Path=/api/v1/orders/**      
 
             - id: inventory-service
-              uri: http://inventory-service:8084
+              uri: http://inventory-service
               predicates:
                 - Path=/api/v1/inventory/**    
 
+            - id: cart-service
+              uri: http://cart-service
+              predicates:
+                - Path=/api/v1/carts/**    
+
+security:
+  jwt:
+    secret: ${SECURITY_JWT_SECRET}    
+      
 logging:
   level:
     org.springframework.cloud.gateway: TRACE
