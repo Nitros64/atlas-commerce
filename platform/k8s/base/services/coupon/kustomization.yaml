@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: atlas
+
+resources:
+  - configmap.yaml
+  - deployment.yaml
+  - service.yaml
+  - networkpolicy.yaml
+  - postgres-secret.yaml
+  - postgres-service.yaml
+  - postgres-statefulset.yaml
+  - postgres-networkpolicy.yaml

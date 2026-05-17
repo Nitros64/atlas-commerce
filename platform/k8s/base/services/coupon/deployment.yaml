@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coupon
+  labels:
+    app: coupon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coupon
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: coupon
+        component: backend
+    spec:
+      containers:
+        - name: coupon
+          image: nitros64/coupon-service:1.0.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8087
+              name: http
+          envFrom:
+            - configMapRef:
+                name: coupon-config
+            - secretRef:
+                name: postgres-coupon-secret
+            - secretRef:
+                name: jwt-secret
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8087
+            failureThreshold: 30
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8087
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8087
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "150m"
+              memory: "384Mi"
+            limits:
+              cpu: "700m"
+              memory: "768Mi"

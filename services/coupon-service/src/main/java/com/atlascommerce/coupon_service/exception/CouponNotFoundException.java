@@ -1,0 +1,8 @@
+package com.atlascommerce.coupon_service.exception;
+
+public class CouponNotFoundException extends RuntimeException {
+
+    public CouponNotFoundException(String code) {
+        super("Coupon not found with code: " + code);
+    }
+}
