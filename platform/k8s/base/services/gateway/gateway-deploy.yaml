@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: nitros64/api-gateway:1.0.18
+          image: nitros64/api-gateway:1.0.19
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

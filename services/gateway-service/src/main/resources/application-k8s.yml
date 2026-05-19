@@ -70,6 +70,11 @@ spring:
               predicates:
                 - Path=/api/v1/shipping/**    
 
+            - id: notification-service
+              uri: http://notification-service
+              predicates:
+                - Path=/api/v1/notifications/**    
+
 security:
   jwt:
     secret: ${SECURITY_JWT_SECRET}    

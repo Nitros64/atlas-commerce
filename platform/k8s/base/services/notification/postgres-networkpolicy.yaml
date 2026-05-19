@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-notification-netpol
+  namespace: atlas
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres-notification
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: notification
+      ports:
+        - protocol: TCP
+          port: 5432
