@@ -1,14 +1,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: notification
+  name: audit
   labels:
-    app: notification
+    app: audit
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: notification
+      app: audit
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -17,21 +17,21 @@ spec:
   template:
     metadata:
       labels:
-        app: notification
+        app: audit
         component: backend
     spec:
       containers:
-        - name: notification
-          image: nitros64/notification-service:1.0.0
+        - name: audit
+          image: nitros64/audit-service:1.0.0
           imagePullPolicy: Always
           ports:
-            - containerPort: 8090
+            - containerPort: 8093
               name: http
           envFrom:
             - configMapRef:
-                name: notification-config
+                name: audit-config
             - secretRef:
-                name: postgres-notification-secret
+                name: postgres-audit-secret
             - secretRef:
                 name: jwt-secret
           resources:
@@ -40,22 +40,22 @@ spec:
               memory: "384Mi"
             limits:
               cpu: "700m"
-              memory: "768Mi"      
+              memory: "768Mi"
           startupProbe:
             httpGet:
               path: /actuator/health
-              port: 8090
+              port: 8093
             failureThreshold: 30
             periodSeconds: 5
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
-              port: 8090
+              port: 8093
             initialDelaySeconds: 20
             periodSeconds: 20
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
-              port: 8090
+              port: 8093
             initialDelaySeconds: 10
             periodSeconds: 10

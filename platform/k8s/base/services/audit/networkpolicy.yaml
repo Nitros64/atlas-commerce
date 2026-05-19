@@ -1,0 +1,37 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: audit-service-netpol
+  namespace: atlas
+spec:
+  podSelector:
+    matchLabels:
+      app: audit
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: atlas
+      ports:
+        - protocol: TCP
+          port: 8093
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgres-audit
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
