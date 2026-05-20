@@ -8,6 +8,7 @@ import com.atlascommerce.order.entity.OrderEntity;
 import com.atlascommerce.order.entity.OrderItemEntity;
 import com.atlascommerce.order.event.OrderCreatedEvent;
 import com.atlascommerce.order.event.OrderEventPublisher;
+import com.atlascommerce.order.event.OrderItemEvent;
 import com.atlascommerce.order.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,24 +57,23 @@ public class OrderService {
         OrderEntity saved = orderRepository.save(order);
 
         OrderCreatedEvent event = new OrderCreatedEvent(
-        saved.getId(),
-        saved.getUserId(),
-        saved.getTotalAmount(),
-        saved.getCurrency(),
-        saved.getCreatedAt().toString(),
-        saved.getItems().stream()
-                .map(item -> new OrderCreatedEvent.OrderCreatedItem(
-                        item.getProductId(),
-                        item.getQuantity(),
-                        item.getUnitPrice()
-                ))
-                .toList()
+                saved.getId(),
+                saved.getUserId(),
+                saved.getTotalAmount(),
+                saved.getCurrency(),
+                saved.getCreatedAt().toInstant().toString(),
+                saved.getItems().stream()
+                    .map(item -> new OrderItemEvent(
+                            item.getProductId(),
+                            item.getQuantity(),
+                            item.getUnitPrice()
+                    ))
+                    .toList()
         );
 
         try {
             orderEventPublisher.publishOrderCreated(event);
         } catch (Exception ex) {
-            // temporalmente solo para desarrollo
             ex.printStackTrace();
         }
 

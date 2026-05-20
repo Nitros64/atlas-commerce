@@ -8,23 +8,30 @@ import org.springframework.stereotype.Component;
 import com.atlascommerce.order.event.OrderCreatedEvent;
 import com.atlascommerce.order.event.OrderEventPublisher;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Component
 @Qualifier("kafkaOrderEventPublisher")
+@Slf4j
 public class KafkaOrderEventPublisher implements OrderEventPublisher {
 
     private final KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate;
-    private final String topic;
+    private final String orderEventsTopic;
 
     public KafkaOrderEventPublisher(
             KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate,
-            @Value("${atlas.kafka.topics.order-events}") String topic
+            @Value("${atlas.kafka.topics.order-events}") String orderEventsTopic
     ) {
         this.kafkaTemplate = kafkaTemplate;
-        this.topic = topic;
+        this.orderEventsTopic = orderEventsTopic;
     }
 
     @Override
     public void publishOrderCreated(OrderCreatedEvent event) {
-        kafkaTemplate.send(topic, String.valueOf(event.getOrderId()), event);
+        kafkaTemplate.send(orderEventsTopic, String.valueOf(event.orderId()), event);
+
+        log.info("Published ORDER_CREATED event. orderId={} topic={}",
+                event.orderId(),
+                orderEventsTopic);
     }
 }
