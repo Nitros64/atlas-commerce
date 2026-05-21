@@ -1,6 +1,5 @@
 package com.atlascommerce.order.config;
 
-import com.atlascommerce.order.event.OrderCreatedEvent;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +9,8 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 
+import com.atlascommerce.order.event.OrderCreatedEvent;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,21 +18,31 @@ import java.util.Map;
 public class KafkaProducerConfig {
 
     @Bean
-    public ProducerFactory<String, OrderCreatedEvent> orderCreatedProducerFactory(
+    public KafkaTemplate<String, String> kafkaTemplate(
             @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers
     ) {
+
         Map<String, Object> props = new HashMap<>();
-
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        props.put( ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,"org.springframework.kafka.support.serializer.JsonSerializer");
-
-        return new DefaultKafkaProducerFactory<>(props);
+        props.put(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                bootstrapServers
+        );
+        props.put(
+                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+                StringSerializer.class
+        );
+        props.put(
+                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+                StringSerializer.class
+        );
+        return new KafkaTemplate<>(
+                new DefaultKafkaProducerFactory<>(props)
+        );
     }
 
     @Bean
-    public KafkaTemplate<String, OrderCreatedEvent> orderCreatedKafkaTemplate(
-            ProducerFactory<String, OrderCreatedEvent> orderCreatedProducerFactory
+    public KafkaTemplate<String, String> orderCreatedKafkaTemplate(
+            ProducerFactory<String, String> orderCreatedProducerFactory
     ) {
         return new KafkaTemplate<>(orderCreatedProducerFactory);
     }

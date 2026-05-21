@@ -9,6 +9,10 @@ RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:21-jre
 
+RUN addgroup --system spring && adduser --system --uid 1001 spring --ingroup spring
+
+USER 1001
+
 WORKDIR /app
 
 COPY --from=builder /app/target/*.jar app.jar
@@ -16,4 +20,3 @@ COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8083
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
-#ENTRYPOINT ["java", "-Dspring.profiles.active=docker", "-jar", "app.jar"]

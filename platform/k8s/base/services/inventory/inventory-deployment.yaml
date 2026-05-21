@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: inventory
+  namespace: atlas  
   labels:
     app: inventory
 spec:
@@ -22,7 +23,7 @@ spec:
     spec:
       containers:
         - name: inventory
-          image: nitros64/inventory-service:1.0.1
+          image: nitros64/inventory-service:1.0.8
           imagePullPolicy: Always
           ports:
             - containerPort: 8084

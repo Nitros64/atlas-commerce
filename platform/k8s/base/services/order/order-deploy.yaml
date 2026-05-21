@@ -20,7 +20,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: order
-        image: nitros64/order-service:1.0.9
+        image: nitros64/order-service:1.0.11
         imagePullPolicy: Always
         ports:
         - containerPort: 8083

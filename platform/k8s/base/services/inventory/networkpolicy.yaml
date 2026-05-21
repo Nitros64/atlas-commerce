@@ -31,6 +31,14 @@ spec:
         - protocol: TCP
           port: 5432
 
+    - to:
+        - podSelector:
+            matchLabels:
+              app: kafka
+      ports:
+        - protocol: TCP
+          port: 9092      
+
     # Permite DNS
     - to:
         - namespaceSelector:
