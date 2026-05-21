@@ -47,10 +47,10 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-redis</artifactId>
     </dependency> -->
-    <!-- <dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-kafka</artifactId>
-    </dependency> -->
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
@@ -98,6 +98,14 @@
       <artifactId>lombok</artifactId>
       <optional>true</optional>
     </dependency>
+
+
+    <!-- <dependency>
+			<groupId>com.atlascommerce</groupId>
+			<artifactId>atlas-common-events</artifactId>
+			<version>1.0.0</version>
+		</dependency> -->
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-h2console</artifactId>
