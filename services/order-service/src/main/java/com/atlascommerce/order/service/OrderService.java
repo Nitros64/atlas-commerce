@@ -11,6 +11,7 @@ import com.atlascommerce.order.event.OrderEventPublisher;
 import com.atlascommerce.order.event.OrderItemEvent;
 import com.atlascommerce.order.repository.OrderRepository;
 
+import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -91,10 +92,35 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public OrderResponse findById(Long id) {
-        OrderEntity order = orderRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+        OrderEntity order = getOrderOrThrow(id);
 
         return toResponse(order);
+    }
+
+    @Transactional
+    public void markAsReserved(Long orderId) {
+        OrderEntity order = getOrderOrThrow(orderId);
+        order.setStatus("RESERVED");
+        orderRepository.save(order);
+    }
+
+    @Transactional
+    public void markAsPaid(Long orderId) {
+        OrderEntity order = getOrderOrThrow(orderId);
+        order.setStatus("PAID");
+        orderRepository.save(order);
+    }
+
+    @Transactional
+    public void markAsShipped(Long orderId) {
+        OrderEntity order = getOrderOrThrow(orderId);
+        order.setStatus("SHIPPED");
+        orderRepository.save(order);
+    }
+
+    private OrderEntity getOrderOrThrow(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
     }
 
     private OrderResponse toResponse(OrderEntity order) {

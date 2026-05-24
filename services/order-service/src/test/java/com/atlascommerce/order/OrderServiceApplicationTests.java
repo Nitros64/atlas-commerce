@@ -6,7 +6,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
 @SpringBootTest(properties = {
-        "spring.kafka.bootstrap-servers=localhost:9092"
+		"spring.kafka.listener.auto-startup=false"
 })
 class OrderServiceApplicationTests {
 

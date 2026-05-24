@@ -28,3 +28,7 @@ Flujo ideal:
 	5. Luego payment-service cobra.
 	6. Si payment OK, inventory hace decrease/commit del stock.
 	7. Si payment falla, inventory hace release del stock.
+
+
+order -> inventory -> payment -> shipping -> notification
+                 ↘ audit
