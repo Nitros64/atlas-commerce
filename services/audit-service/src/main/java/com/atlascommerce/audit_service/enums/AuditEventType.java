@@ -1,13 +1,23 @@
 package com.atlascommerce.audit_service.enums;
 
 public enum AuditEventType {
+
     LOGIN_SUCCESS,
     LOGIN_FAILED,
     USER_CREATED,
+
     ORDER_CREATED,
+
+    INVENTORY_RESERVED,
+    INVENTORY_FAILED,
+
     PAYMENT_CAPTURED,
     PAYMENT_FAILED,
-    COUPON_APPLIED,
+
     SHIPMENT_CREATED,
-    SHIPMENT_DELIVERED
+    SHIPMENT_DELIVERED,
+
+    NOTIFICATION_SENT,
+
+    COUPON_APPLIED
 }
