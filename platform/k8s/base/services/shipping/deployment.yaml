@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: shipping
+  namespace: atlas
   labels:
     app: shipping
 spec:
@@ -22,7 +23,7 @@ spec:
     spec:
       containers:
         - name: shipping
-          image: nitros64/shipping-service:1.0.0
+          image: nitros64/shipping-service:1.0.2
           imagePullPolicy: Always
           ports:
             - containerPort: 8089

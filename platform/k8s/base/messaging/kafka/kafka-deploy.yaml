@@ -51,11 +51,11 @@ spec:
           runAsGroup: 1000      
         resources:
           requests:
-            cpu: "500m"
-            memory: "768Mi"
+            cpu: "100m"
+            memory: "512Mi"
           limits:
-            cpu: "1500m"
-            memory: "2Gi"
+            cpu: "700m"
+            memory: "900Mi"
 
         volumeMounts:
           - name: kafka-data
