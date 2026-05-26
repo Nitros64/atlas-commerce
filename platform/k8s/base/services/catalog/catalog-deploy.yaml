@@ -34,9 +34,9 @@ spec:
         - name: JAVA_TOOL_OPTIONS
           value: >-
             -XX:+UseContainerSupport
-            -XX:MaxRAMPercentage=40.0
-            -XX:InitialRAMPercentage=10.0
-            -XX:MaxMetaspaceSize=128m 
+            -XX:MaxRAMPercentage=35.0
+            -XX:InitialRAMPercentage=8.0
+            -XX:MaxMetaspaceSize=128m
 
         - name: SPRING_DATASOURCE_USERNAME
           valueFrom:
