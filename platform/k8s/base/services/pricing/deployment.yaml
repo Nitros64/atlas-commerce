@@ -27,6 +27,14 @@ spec:
           ports:
             - containerPort: 8086
               name: http
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: >-
+                -XX:+UseContainerSupport
+                -XX:MaxRAMPercentage=40.0
+                -XX:InitialRAMPercentage=10.0
+                -XX:MaxMetaspaceSize=128m
+                    
           envFrom:
             - configMapRef:
                 name: pricing-config
@@ -36,20 +44,28 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8086
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
             failureThreshold: 30
-            periodSeconds: 5
+
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
               port: 8086
-            initialDelaySeconds: 20
+            initialDelaySeconds: 60
             periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
               port: 8086
-            initialDelaySeconds: 10
+            initialDelaySeconds: 15
             periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
           resources:
             requests:
               cpu: "100m"

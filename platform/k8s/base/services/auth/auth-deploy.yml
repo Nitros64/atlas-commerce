@@ -33,7 +33,11 @@ spec:
         - containerPort: 8081
         env:
           - name: JAVA_TOOL_OPTIONS
-            value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=60.0 -XX:InitialRAMPercentage=25.0"  
+            value: >-
+              -XX:+UseContainerSupport
+              -XX:MaxRAMPercentage=40.0
+              -XX:InitialRAMPercentage=10.0
+              -XX:MaxMetaspaceSize=128m  
         envFrom:
           - configMapRef: #DB
               name: cm-auth-spring-datasource
@@ -53,36 +57,39 @@ spec:
           readOnlyRootFilesystem: false            
         resources:
           requests:
-            cpu: "250m"
-            memory: "512Mi"
+            cpu: "100m"
+            memory: "256Mi"
           limits:
-            cpu: "1000m"
-            memory: "1Gi"
+            cpu: "500m"
+            memory: "512Mi"
             
         startupProbe:
           httpGet:
             path: /actuator/health
             port: 8081
           initialDelaySeconds: 10
-          periodSeconds: 5
+          periodSeconds: 10
           timeoutSeconds: 3
-          failureThreshold: 12
+          failureThreshold: 30
+
         livenessProbe:
           httpGet:
             path: /actuator/health/liveness
             port: 8081
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: 60
+          periodSeconds: 20
           timeoutSeconds: 3
           failureThreshold: 3
+
         readinessProbe:
           httpGet:
             path: /actuator/health/readiness
-            port: 8081 
-          initialDelaySeconds: 0
-          periodSeconds: 5
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 10
           timeoutSeconds: 3
-          failureThreshold: 6  
+          failureThreshold: 6 
+
         lifecycle:
           preStop:
             exec:

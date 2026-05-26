@@ -13,8 +13,6 @@ spring:
       connect-timeout: 10s
       timeout: 10s
 
-  
-
   cloud:
     gateway:
       server:
@@ -87,6 +85,8 @@ security:
 logging:
   level:
     org.springframework.cloud.gateway: TRACE
+    org.hibernate.SQL: OFF
+    org.hibernate.orm.jdbc.bind: OFF
 
 management:
   endpoints:

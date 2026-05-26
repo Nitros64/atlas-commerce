@@ -35,7 +35,11 @@ spec:
                 
         env:
         - name: JAVA_TOOL_OPTIONS
-          value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=60.0 -XX:InitialRAMPercentage=25.0"
+          value: >-
+            -XX:+UseContainerSupport
+            -XX:MaxRAMPercentage=40.0
+            -XX:InitialRAMPercentage=10.0
+            -XX:MaxMetaspaceSize=128m
 
         # DB
         - name: SPRING_DATASOURCE_USERNAME
@@ -83,29 +87,31 @@ spec:
             memory: "256Mi"
           limits:
             cpu: "500m"
-            memory: "768Mi"
+            memory: "512Mi"
 
         startupProbe:
           httpGet:
             path: /actuator/health
             port: 8083
           initialDelaySeconds: 10
-          periodSeconds: 5
-          timeoutSeconds: 2
-          failureThreshold: 24
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 30
 
         livenessProbe:
           httpGet:
             path: /actuator/health/liveness
             port: 8083
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          timeoutSeconds: 2
+          initialDelaySeconds: 60
+          periodSeconds: 20
+          timeoutSeconds: 3
+          failureThreshold: 3
 
         readinessProbe:
           httpGet:
             path: /actuator/health/readiness
             port: 8083
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 2
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 6

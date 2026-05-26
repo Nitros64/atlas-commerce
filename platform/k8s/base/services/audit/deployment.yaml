@@ -27,6 +27,13 @@ spec:
           ports:
             - containerPort: 8093
               name: http
+          env:
+          - name: JAVA_TOOL_OPTIONS
+            value: >-
+              -XX:+UseContainerSupport
+              -XX:MaxRAMPercentage=40.0
+              -XX:InitialRAMPercentage=10.0
+              -XX:MaxMetaspaceSize=128m    
           envFrom:
             - configMapRef:
                 name: audit-config
@@ -36,26 +43,35 @@ spec:
                 name: jwt-secret
           resources:
             requests:
-              cpu: "150m"
-              memory: "384Mi"
+              cpu: "100m"
+              memory: "256Mi"
             limits:
-              cpu: "700m"
-              memory: "768Mi"
+              cpu: "500m"
+              memory: "512Mi"
+              
           startupProbe:
             httpGet:
               path: /actuator/health
               port: 8093
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
             failureThreshold: 30
-            periodSeconds: 5
+
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
               port: 8093
-            initialDelaySeconds: 20
+            initialDelaySeconds: 60
             periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
               port: 8093
-            initialDelaySeconds: 10
+            initialDelaySeconds: 15
             periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
