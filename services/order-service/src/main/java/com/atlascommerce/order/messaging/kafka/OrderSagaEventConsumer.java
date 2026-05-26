@@ -7,6 +7,8 @@ import com.atlascommerce.order.event.ShippingCreatedEvent;
 import com.atlascommerce.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
@@ -18,6 +20,16 @@ public class OrderSagaEventConsumer {
 
     private final ObjectMapper objectMapper;
     private final OrderService orderService;
+    private final DeadLetterPublisher deadLetterPublisher;
+
+    @Value("${atlas.kafka.topics.inventory-events-dlt}")
+    private String inventoryEventsDltTopic;
+
+    @Value("${atlas.kafka.topics.payment-events-dlt}")
+    private String paymentEventsDltTopic;
+
+    @Value("${atlas.kafka.topics.shipping-events-dlt}")
+    private String shippingEventsDltTopic;
 
     @KafkaListener(
             topics = "${atlas.kafka.topics.inventory-events}",
@@ -62,6 +74,12 @@ public class OrderSagaEventConsumer {
 
         } catch (Exception e) {
             log.error("Failed to process inventory event: {}", payload, e);
+            deadLetterPublisher.publish(
+                    inventoryEventsDltTopic,
+                    null,
+                    payload,
+                    e
+            );
         }
     }
 
@@ -85,6 +103,12 @@ public class OrderSagaEventConsumer {
 
         } catch (Exception e) {
             log.error("Failed to process payment event: {}", payload, e);
+            deadLetterPublisher.publish(
+                    paymentEventsDltTopic,
+                    null,
+                    payload,
+                    e
+            );
         }
     }
 
@@ -108,6 +132,12 @@ public class OrderSagaEventConsumer {
 
         } catch (Exception e) {
             log.error("Failed to process shipping event: {}", payload, e);
+            deadLetterPublisher.publish(
+                    shippingEventsDltTopic,
+                    null,
+                    payload,
+                    e
+            );
         }
     }
 }
