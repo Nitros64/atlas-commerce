@@ -100,6 +100,15 @@ public class OrderService {
     @Transactional
     public void markAsReserved(Long orderId) {
         OrderEntity order = getOrderOrThrow(orderId);
+
+        if ("FAILED".equalsIgnoreCase(order.getStatus())) {
+            return;
+        }
+
+        if (!"PENDING".equalsIgnoreCase(order.getStatus())) {
+            return;
+        }
+
         order.setStatus("RESERVED");
         orderRepository.save(order);
     }
@@ -107,6 +116,14 @@ public class OrderService {
     @Transactional
     public void markAsPaid(Long orderId) {
         OrderEntity order = getOrderOrThrow(orderId);
+        if ("FAILED".equalsIgnoreCase(order.getStatus())) {
+            return;
+        }
+
+        if (!"RESERVED".equalsIgnoreCase(order.getStatus())) {
+            return;
+        }
+
         order.setStatus("PAID");
         orderRepository.save(order);
     }
@@ -114,8 +131,27 @@ public class OrderService {
     @Transactional
     public void markAsShipped(Long orderId) {
         OrderEntity order = getOrderOrThrow(orderId);
+        if ("FAILED".equalsIgnoreCase(order.getStatus())) {
+            return;
+        }
+
+        if (!"PAID".equalsIgnoreCase(order.getStatus())) {
+            return;
+        }
         order.setStatus("SHIPPED");
         orderRepository.save(order);
+    }
+
+    @Transactional
+    public void markAsFailed(Long orderId) {
+        OrderEntity order = getOrderOrThrow(orderId);
+        order.setStatus("FAILED");
+        orderRepository.save(order);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isFailed(Long orderId) {
+        return getOrderOrThrow(orderId).getStatus().equalsIgnoreCase("FAILED");
     }
 
     private OrderEntity getOrderOrThrow(Long orderId) {

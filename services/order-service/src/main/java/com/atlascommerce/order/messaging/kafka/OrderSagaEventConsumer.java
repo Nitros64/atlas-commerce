@@ -1,5 +1,6 @@
 package com.atlascommerce.order.messaging.kafka;
 
+import com.atlascommerce.order.event.InventoryFailedEvent;
 import com.atlascommerce.order.event.InventoryReservedEvent;
 import com.atlascommerce.order.event.PaymentCompletedEvent;
 import com.atlascommerce.order.event.ShippingCreatedEvent;
@@ -24,12 +25,40 @@ public class OrderSagaEventConsumer {
     )
     public void consumeInventoryEvent(String payload) {
         try {
-            InventoryReservedEvent event =
-                    objectMapper.readValue(payload, InventoryReservedEvent.class);
 
-            orderService.markAsReserved(event.orderId());
+            var root = objectMapper.readTree(payload);
+            String status = root.has("status") 
+                            ? root.get("status").asString() 
+                            : "";
 
-            log.info("ORDER_STATUS_UPDATED orderId={} status=RESERVED", event.orderId());
+            if ("RESERVED".equalsIgnoreCase(status)) {
+                InventoryReservedEvent event =
+                        objectMapper.readValue(payload, InventoryReservedEvent.class);
+
+                orderService.markAsReserved(event.orderId());
+
+                log.info("ORDER_STATUS_UPDATED orderId={} status=RESERVED", event.orderId());
+                return;
+            }                
+
+            if ("FAILED".equalsIgnoreCase(status)) {
+                InventoryFailedEvent event =
+                        objectMapper.readValue(payload, InventoryFailedEvent.class);
+
+                orderService.markAsFailed(event.orderId());
+
+                log.warn("ORDER_STATUS_UPDATED orderId={} status=FAILED reason={}",
+                        event.orderId(),
+                        event.reason());
+
+                return;
+            }
+
+            log.warn(
+                "Ignoring unknown inventory event status={} payload={}",
+                status,
+                payload
+            );
 
         } catch (Exception e) {
             log.error("Failed to process inventory event: {}", payload, e);
@@ -44,6 +73,11 @@ public class OrderSagaEventConsumer {
         try {
             PaymentCompletedEvent event =
                     objectMapper.readValue(payload, PaymentCompletedEvent.class);
+
+            if (orderService.isFailed(event.orderId())) {
+                log.warn("Ignoring PAYMENT_COMPLETED for failed orderId={}", event.orderId());
+                return;
+            }        
 
             orderService.markAsPaid(event.orderId());
 
@@ -63,6 +97,11 @@ public class OrderSagaEventConsumer {
             ShippingCreatedEvent event =
                     objectMapper.readValue(payload, ShippingCreatedEvent.class);
 
+            if (orderService.isFailed(event.orderId())) {
+                log.warn("Ignoring SHIPPING_CREATED for failed orderId={}", event.orderId());
+                return;
+            } 
+            
             orderService.markAsShipped(event.orderId());
 
             log.info("ORDER_STATUS_UPDATED orderId={} status=SHIPPED", event.orderId());

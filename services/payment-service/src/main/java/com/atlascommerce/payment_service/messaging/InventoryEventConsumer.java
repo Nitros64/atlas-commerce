@@ -25,6 +25,17 @@ public class InventoryEventConsumer {
     )
     public void consume(String payload) {
         try {
+            var root = objectMapper.readTree(payload);
+
+            String status = root.has("status")
+                    ? root.get("status").asString()
+                    : "";
+
+            if (!"RESERVED".equalsIgnoreCase(status)) {
+                log.warn("Ignoring inventory event with status={} payload={}", status, payload);
+                return;
+            }
+            
             InventoryReservedEvent event =
                     objectMapper.readValue(payload, InventoryReservedEvent.class);
 
