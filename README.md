@@ -7,237 +7,501 @@
 
 # Atlas Commerce Platform
 
-Cloud-native microservices platform built with **Spring Boot** and **Kubernetes**, designed to demonstrate production-grade backend, security, and DevOps practices.
+## Overview
+
+Atlas Commerce Platform is a cloud-native microservices system built with Spring Boot, Kubernetes, Kafka, RabbitMQ, PostgreSQL, Redis, and modern DevOps tooling.
+
+The project was designed to simulate a production-grade e-commerce backend focused on:
+
+* Distributed systems
+* Event-driven architecture
+* Cloud-native deployment patterns
+* Kubernetes operations
+* Security
+* Observability
+* Async orchestration
+* Saga-like workflows
+
+The platform demonstrates how multiple independent services collaborate asynchronously through Kafka events while running inside Kubernetes.
 
 ---
 
-## 🚀 Overview
+# Architecture
 
-Atlas Commerce is a distributed system composed of independent microservices that handle authentication, product catalog, and order processing.
-
-It showcases:
-
-* Stateless authentication with JWT
-* Refresh token flow with persistence
-* Immediate logout using token blacklist
-* Inter-service communication with RabbitMQ
-* Kubernetes-native deployment
-* Secure configuration with Secrets and ConfigMaps
-
----
-
-## 🏗️ Architecture
+## High-Level Architecture
 
 ```text
-Client
-  │
-  ├── Auth Service (JWT + Refresh Tokens)
-  │        │
-  │        └── PostgreSQL (users, refresh tokens)
-  │
-  ├── Catalog Service
-  │        │
-  │        └── PostgreSQL (products)
-  │
-  ├── Order Service
-  │        │
-  │        ├── PostgreSQL (orders)
-  │        └── RabbitMQ (event-driven communication)
-  │
-  └── Redis (token blacklist / caching)
+                        ┌─────────────────────┐
+                        │     API Gateway     │
+                        │ Spring Cloud Gateway│
+                        └──────────┬──────────┘
+                                   │
+        ┌──────────────────────────┼──────────────────────────┐
+        │                          │                          │
+        ▼                          ▼                          ▼
+ ┌─────────────┐          ┌─────────────┐            ┌─────────────┐
+ │ auth-service│          │catalog-serv.│            │order-service│
+ └──────┬──────┘          └─────────────┘            └──────┬──────┘
+        │                                                   │
+        │                                                   ▼
+        │                                            Kafka Events
+        │                                                   │
+        │                                                   ▼
+        │        ┌──────────────┬──────────────┬──────────────┐
+        │        ▼              ▼              ▼              ▼
+        │  inventory-service payment-service shipping-service audit-service
+        │        │              │              │
+        │        ▼              ▼              ▼
+        │  inventory-events payment-events shipping-events
+        │
+        ▼
+ Redis / JWT blacklist
 ```
 
 ---
 
-## 🧩 Services
+# Event-Driven Saga Flow
 
-### 🔐 auth-service
+## Happy Path
 
-* User registration and login
-* JWT (access + refresh tokens)
-* Token refresh endpoint
-* Logout with token revocation (blacklist)
-* Rate limiting / brute-force protection
+```text
+ORDER_CREATED
+    ↓
+INVENTORY_RESERVED
+    ↓
+PAYMENT_COMPLETED
+    ↓
+SHIPPING_CREATED
+    ↓
+NOTIFICATION_SENT
+```
 
-### 📦 catalog-service
+## Failure Path
 
-* Product management (CRUD)
-* JWT validation (resource server)
-* Independent from auth-service
+```text
+ORDER_CREATED
+    ↓
+INVENTORY_FAILED
+    ↓
+ORDER_FAILED
+```
 
-### 🧾 order-service
+---
+
+# Kafka Topics
+
+| Topic            | Purpose                         |
+| ---------------- | ------------------------------- |
+| order-events     | Order creation events           |
+| inventory-events | Inventory reservation / failure |
+| payment-events   | Payment processing results      |
+| shipping-events  | Shipment creation events        |
+|                  |                                 |
+
+---
+
+# Services
+
+## auth-service
+
+Authentication and authorization service.
+
+Features:
+
+* JWT authentication
+* Access + refresh tokens
+* Token revocation
+* BCrypt password hashing
+* Login protection / rate limiting
+* Redis blacklist integration
+
+---
+
+## order-service
+
+Responsible for:
 
 * Order creation
-* Event publishing to RabbitMQ
-* JWT validation
-* Designed for async processing
+* Saga orchestration
+* Kafka event publishing
+* Order state transitions
+
+Supported states:
+
+```text
+PENDING
+RESERVED
+PAID
+SHIPPED
+FAILED
+```
+
+The service consumes async events and updates the order lifecycle.
 
 ---
 
-## 🔒 Security
+## inventory-service
 
-* Stateless authentication using JWT
-* Access tokens with short expiration
-* Refresh tokens stored in database
-* Token blacklist for immediate logout
-* Password hashing with BCrypt
-* Secrets managed via Kubernetes Secrets
-* Rate limiting on login endpoint
+Responsible for:
 
----
+* Inventory validation
+* Inventory reservation
+* Inventory failure handling
+* Publishing inventory events
 
-## ☁️ Kubernetes Deployment
+Publishes:
 
-Each service is deployed with:
-
-* **Deployment / StatefulSet**
-* **Service (ClusterIP)**
-* **ConfigMap (non-sensitive config)**
-* **Secret (credentials, JWT)**
-* **Probes (startup, liveness, readiness)**
-* **Resource limits**
-* **NGINX Ingress**
-
-
-### Infrastructure components:
-
-* PostgreSQL (StatefulSet)
-* Redis (blacklist / caching)
-* RabbitMQ (event broker)
-* NGINX Ingress Controller
+```text
+INVENTORY_RESERVED
+INVENTORY_FAILED
+```
 
 ---
 
-## 📊 Observability
+## payment-service
 
-Atlas Commerce includes production-style observability tooling:
+Responsible for:
 
-* Prometheus metrics scraping
-* Spring Boot Actuator integration
-* Grafana dashboards
-* Kubernetes health probes
-* Service-level monitoring
+* Payment simulation
+* Async payment processing
+* Publishing payment events
 
-Future additions:
+Publishes:
+
+```text
+PAYMENT_COMPLETED
+PAYMENT_FAILED
+```
+
+---
+
+## shipping-service
+
+Responsible for:
+
+* Shipment creation
+* Tracking number generation
+* Carrier assignment
+
+Publishes:
+
+```text
+SHIPPING_CREATED
+```
+
+---
+
+## notification-service
+
+Responsible for:
+
+* Async notifications
+* Shipment notifications
+* Event-driven communication
+
+---
+
+## audit-service
+
+Consumes Kafka events from multiple services and persists audit logs.
+
+Audited flows include:
+
+* Order creation
+* Inventory reservation/failure
+* Payments
+* Shipments
+* Security events
+
+---
+
+# Security
+
+## JWT Authentication
+
+Atlas uses stateless JWT authentication.
+
+Features:
+
+* Access tokens
+* Refresh tokens
+* Redis token blacklist
+* Secure logout
+* Role-based authorization
+* Spring Security Resource Server
+
+---
+
+# Kubernetes Deployment
+
+Each microservice includes:
+
+* Deployment
+* Service
+* ConfigMap
+* Secret
+* Health probes
+* Resource requests/limits
+* Docker image
+
+Infrastructure components:
+
+* PostgreSQL StatefulSets
+* Kafka
+* RabbitMQ
+* Redis
+* NGINX Ingress
+
+---
+
+# Kubernetes Features
+
+## Health Probes
+
+```text
+/actuator/health
+/actuator/health/liveness
+/actuator/health/readiness
+```
+
+## Resource Management
+
+Configured:
+
+* CPU requests/limits
+* Memory requests/limits
+* JVM container awareness
+
+## Kustomize
+
+Environment overlays are managed using Kustomize.
+
+---
+
+# Observability
+
+## Current Stack
+
+* Spring Boot Actuator
+* Prometheus
+* Grafana
+* Kubernetes probes
+* Structured logging
+
+## Planned
 
 * OpenTelemetry
+* Tempo / Jaeger
+* Loki
 * Distributed tracing
-* Loki log aggregation
+* Centralized logging
 
 ---
 
-## 🔄 CI/CD
+# Messaging Architecture
 
-GitHub Actions pipelines validate:
+## Kafka
+
+Used for:
+
+* Saga orchestration
+* Async communication
+* Event propagation
+* Failure handling
+
+## RabbitMQ
+
+Used for:
+
+* Traditional message broker experimentation
+* Alternative async integration patterns
+
+---
+
+# CI/CD
+
+## GitHub Actions
+
+Current pipeline:
 
 * Maven build
 * Unit tests
-* Docker image builds
+* Docker build
+* Docker Hub push
 
-Future pipeline stages:
+Planned:
 
-* Docker Hub publishing
 * Kubernetes deployment
+* ArgoCD
 * EKS rollout
+* Helm charts
 
 ---
 
-## 🐳 Run Locally (Docker Compose)
+# Local Development
+
+## Docker Compose
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 ---
 
-## ☸️ Deploy to Kubernetes
+# Kubernetes Deployment
+
+## Apply manifests
 
 ```bash
-kubectl apply -f platform/k8s/
+kubectl apply -k platform/k8s/overlays/local
+```
+
+## Verify pods
+
+```bash
 kubectl get pods -n atlas
 ```
 
-Port-forward example:
+## Port-forward example
 
 ```bash
-kubectl port-forward -n atlas svc/auth-service 8081:8081
+kubectl port-forward -n atlas svc/order-service 8083:80
 ```
 
 ---
 
-## 🧪 API Examples
+# Example Event Payloads
 
-### Login
+## ORDER_CREATED
 
-```bash
-curl -X POST http://localhost:8081/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@atlas.com","password":"123456"}'
+```json
+{
+  "orderId": 23,
+  "userId": 1,
+  "currency": "EUR",
+  "items": [
+    {
+      "productId": 101,
+      "quantity": 2,
+      "unitPrice": 19.99
+    }
+  ]
+}
 ```
 
 ---
 
-### Access protected endpoint
+## INVENTORY_FAILED
 
-```bash
-curl http://localhost:8082/api/v1/products \
-  -H "Authorization: Bearer ACCESS_TOKEN"
+```json
+{
+  "orderId": 27,
+  "status": "FAILED",
+  "reason": "Inventory validation failed"
+}
 ```
 
 ---
 
-### Refresh token
+# Design Decisions
 
-```bash
-curl -X POST http://localhost:8081/api/v1/auth/refresh-token \
-  -H "Content-Type: application/json" \
-  -d '{"refreshToken":"REFRESH_TOKEN"}'
-```
+## Why Event-Driven?
 
----
+The platform intentionally uses asynchronous orchestration to simulate real distributed systems.
 
-## ⚡ Design Decisions
+Benefits:
 
-* **Stateless authentication** for scalability
-* **Blacklist with Redis** to support immediate logout
-* **Microservice isolation** (each service owns its data)
-* **Event-driven architecture** for order processing
-* **Monorepo** for simplified development and visibility
+* Loose coupling
+* Scalability
+* Fault isolation
+* Async processing
+* Independent service ownership
 
 ---
 
-## 📈 Future Improvements
+## Database Per Service
 
-* API Gateway (NGINX / Spring Cloud Gateway)
-* Distributed tracing (OpenTelemetry)
-* Centralized logging (ELK / Loki)
-* External Secrets (AWS Secrets Manager / Vault)
-* Horizontal Pod Autoscaling (HPA)
-* CI/CD pipelines (GitHub Actions)
+Each microservice owns its own database.
+
+Benefits:
+
+* Strong isolation
+* Independent scaling
+* Service autonomy
+* Reduced coupling
 
 ---
 
-## 🧠 Key Learning Outcomes
+# Current Technical Stack
+
+| Technology      | Usage                     |
+| --------------- | ------------------------- |
+| Java 21         | Backend language          |
+| Spring Boot     | Microservices             |
+| Spring Security | Authentication            |
+| PostgreSQL      | Persistence               |
+| Redis           | Token blacklist / caching |
+| Kafka           | Event streaming           |
+| RabbitMQ        | Messaging                 |
+| Docker          | Containers                |
+| Kubernetes      | Orchestration             |
+| Kustomize       | Manifest management       |
+| Prometheus      | Metrics                   |
+| Grafana         | Dashboards                |
+| GitHub Actions  | CI/CD                     |
+
+---
+
+# Future Roadmap
+
+## Infrastructure
+
+* EKS deployment
+* ArgoCD GitOps
+* Helm charts
+* HPA autoscaling
+* Cluster autoscaler
+
+## Observability
+
+* OpenTelemetry
+* Distributed tracing
+* Loki logging
+* Advanced dashboards
+
+## Resilience
+
+* DLQ topics
+* Retry handling
+* Resilience4j
+* Circuit breakers
+* Idempotency
+
+## Security
+
+* Keycloak / OpenID Connect
+* Vault integration
+* External Secrets
+* NetworkPolicies
+
+---
+
+# Learning Outcomes
 
 This project demonstrates:
 
-* Real-world Spring Security implementation
-* Secure JWT handling in distributed systems
+* Distributed systems design
+* Event-driven microservices
+* Saga-like orchestration
 * Kubernetes production patterns
-* Microservices architecture design
-* DevOps mindset and tooling
+* Cloud-native architecture
+* Spring Security in distributed systems
+* Async communication with Kafka
+* DevOps and CI/CD practices
+* Failure handling strategies
 
 ---
 
-## 📬 Author
+# Author
 
-Built as a portfolio project to demonstrate backend and cloud-native expertise.
-
----
-
-## ⭐ Final Note
-
-This is not a toy project.
-It is designed to reflect **real production challenges and solutions**.
-
----
+Built as a large-scale portfolio project focused on backend engineering, distributed systems, Kubernetes, and cloud-native architecture.
