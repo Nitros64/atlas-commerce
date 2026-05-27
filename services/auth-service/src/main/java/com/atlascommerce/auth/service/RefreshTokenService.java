@@ -41,7 +41,7 @@ public class RefreshTokenService {
     public void revokeRefreshToken(String refreshToken) {
         String tokenHash = HashUtils.sha256(refreshToken);
 
-        refreshTokenRepository.findByTokenHash(HashUtils.sha256(tokenHash))
+        refreshTokenRepository.findByTokenHash(tokenHash)
                 .ifPresent(rt -> {
                     rt.setRevoked(true);
                     refreshTokenRepository.save(rt);

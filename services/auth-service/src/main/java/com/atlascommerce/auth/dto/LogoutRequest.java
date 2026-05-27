@@ -1,10 +1,12 @@
 package com.atlascommerce.auth.dto;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@RequiredArgsConstructor
 public class LogoutRequest {
-    private String refreshToken; 
+    private final String refreshToken; 
 }

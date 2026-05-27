@@ -3,6 +3,7 @@ package com.atlascommerce.auth.config;
 import java.util.Set;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,7 @@ import com.atlascommerce.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 @Component
+@Profile("!test")
 @RequiredArgsConstructor
 public class AdminInitializer implements CommandLineRunner {
 
