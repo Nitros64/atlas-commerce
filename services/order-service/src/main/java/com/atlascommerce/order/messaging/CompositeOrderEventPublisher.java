@@ -23,22 +23,19 @@ public class CompositeOrderEventPublisher implements OrderEventPublisher {
         this.kafkaPublisher = kafkaPublisher;
     }
 
-    // public void publishOrderCreated(OrderCreatedEvent event) {
-    //     log.info("Publishing order.created event for orderId={}", event.getOrderId());
-        
-    //     rabbitTemplate.convertAndSend(
-    //             RabbitConfig.ORDER_EXCHANGE,
-    //             RabbitConfig.ORDER_CREATED_ROUTING_KEY,
-    //             event
-    //     );
-
-    //     log.info("Published order.created event for orderId={}", event.getOrderId());
-    // }
-
     @Override
     public void publishOrderCreated(OrderCreatedEvent event) {
-        rabbitPublisher.publishOrderCreated(event);
-        log.info("Published order.created event for RabbitMq");
+        try {
+            rabbitPublisher.publishOrderCreated(event);
+            log.info("Published order.created event for RabbitMq");
+        } catch (Exception e) {
+            log.warn(
+                    "RabbitMQ publish failed, continuing with Kafka. orderId={} error={}",
+                    event.orderId(),
+                    e.getMessage()
+            );
+        }
+
         kafkaPublisher.publishOrderCreated(event);
         log.info("Published order.created event for Kafka");
     }
