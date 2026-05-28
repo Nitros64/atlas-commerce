@@ -20,7 +20,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: order
-        image: nitros64/order-service:1.0.16
+        image: nitros64/order-service:1.0.19
         imagePullPolicy: Always
         ports:
         - containerPort: 8083
@@ -39,7 +39,7 @@ spec:
             -XX:+UseContainerSupport
             -XX:MaxRAMPercentage=35.0
             -XX:InitialRAMPercentage=8.0
-            -XX:MaxMetaspaceSize=128m
+            -XX:MaxMetaspaceSize=192m
 
         # DB
         - name: SPRING_DATASOURCE_USERNAME

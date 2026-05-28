@@ -17,4 +17,5 @@ resources:
   - ingress
   - observability/prometheus
   - observability/grafana
+  - observability/tempo
   # - network-policies

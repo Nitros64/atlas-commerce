@@ -103,3 +103,17 @@ management:
         enabled: false
     probes:
       enabled: false
+
+  tracing:
+    sampling:
+      probability: 1.0    
+
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: http://tempo:4318/v1/traces
+    resource-attributes:
+      service:
+        namespace: atlas
+        name: gateway-service    
