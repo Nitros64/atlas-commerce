@@ -39,6 +39,14 @@ spec:
         - protocol: TCP
           port: 9092      
 
+    - to:
+      - podSelector:
+          matchLabels:
+            app: tempo
+      ports:
+        - protocol: TCP
+          port: 4318      
+
     # Permite DNS
     - to:
         - namespaceSelector:

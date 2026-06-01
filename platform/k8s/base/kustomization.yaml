@@ -14,6 +14,13 @@ resources:
   - services/catalog
   - services/order
   - services/gateway
+  - services/inventory
+  - services/payment
+  - services/shipping
+  - services/notification
+  - services/pricing
+  - services/audit
+  - services/cart
   - ingress
   - observability/prometheus
   - observability/grafana

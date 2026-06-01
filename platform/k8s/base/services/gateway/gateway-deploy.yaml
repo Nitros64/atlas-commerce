@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: gateway
   namespace: atlas
+  labels:
+    app: gateway
 spec:
   replicas: 1
   selector:

@@ -34,7 +34,15 @@ spec:
               app: kafka
       ports:
         - protocol: TCP
-          port: 9092         
+          port: 9092        
+          
+    - to:
+      - podSelector:
+          matchLabels:
+            app: tempo
+      ports:
+        - protocol: TCP
+          port: 4318       
 
     - to:
         - namespaceSelector:
