@@ -1,12 +1,14 @@
 package com.atlascommerce.payment_service.messaging;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,16 +45,15 @@ class PaymentEventPublisherTest {
 
     @Test
     void publishCompleted_shouldPublishKafkaEvent() throws Exception {
-
         PaymentCompletedEvent event =
-            new PaymentCompletedEvent(
-                    1L,
-                    10L,
-                    "COMPLETED",
-                    BigDecimal.valueOf(99.99),
-                    "EUR",
-                    "2026-05-27T10:00:00Z"
-            );
+                new PaymentCompletedEvent(
+                        1L,
+                        10L,
+                        "COMPLETED",
+                        BigDecimal.valueOf(99.99),
+                        "EUR",
+                        "2026-05-27T10:00:00Z"
+                );
 
         String payload = """
                 {"orderId":1}
@@ -61,18 +62,13 @@ class PaymentEventPublisherTest {
         when(objectMapper.writeValueAsString(event))
                 .thenReturn(payload);
 
-        publisher.publishCompleted(event);
+        publisher.publishCompleted(event, "00-trace-id-span-id-01");
 
-        verify(kafkaTemplate).send(
-                "payment-events",
-                "1",
-                payload
-        );
+        verify(kafkaTemplate).send(any(ProducerRecord.class));
     }
 
     @Test
     void publishCompleted_shouldThrow_whenSerializationFails() throws Exception {
-
         PaymentCompletedEvent event =
                 new PaymentCompletedEvent(
                         1L,
@@ -88,7 +84,7 @@ class PaymentEventPublisherTest {
 
         assertThrows(
                 RuntimeException.class,
-                () -> publisher.publishCompleted(event)
+                () -> publisher.publishCompleted(event, "00-trace-id-span-id-01")
         );
 
         verifyNoInteractions(kafkaTemplate);

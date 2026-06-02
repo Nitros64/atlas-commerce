@@ -20,7 +20,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: order
-        image: nitros64/order-service:1.0.19
+        image: nitros64/order-service:1.0.21
         imagePullPolicy: Always
         ports:
         - containerPort: 8083
@@ -93,19 +93,19 @@ spec:
           httpGet:
             path: /actuator/health
             port: 8083
-          initialDelaySeconds: 10
+          initialDelaySeconds: 30
           periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 30
+          timeoutSeconds: 10
+          failureThreshold: 45
 
         livenessProbe:
           httpGet:
             path: /actuator/health/liveness
             port: 8083
-          initialDelaySeconds: 60
-          periodSeconds: 20
-          timeoutSeconds: 3
-          failureThreshold: 3
+          initialDelaySeconds: 180
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 5
 
         readinessProbe:
           httpGet:

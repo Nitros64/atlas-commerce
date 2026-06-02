@@ -3,10 +3,13 @@ package com.atlascommerce.payment_service.messaging;
 import com.atlascommerce.payment_service.event.PaymentCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
+
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Component
@@ -19,22 +22,38 @@ public class PaymentEventPublisher {
     @Value("${atlas.kafka.topics.payment-events}")
     private String paymentEventsTopic;
 
-    public void publishCompleted(PaymentCompletedEvent event) {
+    public void publishCompleted(PaymentCompletedEvent event, String traceparent) {
+        publish(String.valueOf(event.orderId()), event, "PAYMENT_COMPLETED", traceparent);
+    }
+
+    private void publish(
+            String key,
+            PaymentCompletedEvent event,
+            String eventName,
+            String traceparent
+    ) {
         try {
             String payload = objectMapper.writeValueAsString(event);
 
-            kafkaTemplate.send(
-                    paymentEventsTopic,
-                    String.valueOf(event.orderId()),
-                    payload
-            );
+            ProducerRecord<String, String> record =
+                    new ProducerRecord<>(paymentEventsTopic, key, payload);
 
-            log.info("PAYMENT_COMPLETED published orderId={} topic={}",
+            if (traceparent != null && !traceparent.isBlank()) {
+                record.headers().add(
+                        "traceparent",
+                        traceparent.getBytes(StandardCharsets.UTF_8)
+                );
+            }
+
+            kafkaTemplate.send(record);
+
+            log.info("{} published orderId={} topic={}",
+                    eventName,
                     event.orderId(),
                     paymentEventsTopic);
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to publish PAYMENT_COMPLETED", e);
+            throw new RuntimeException("Failed to publish " + eventName, e);
         }
     }
 }

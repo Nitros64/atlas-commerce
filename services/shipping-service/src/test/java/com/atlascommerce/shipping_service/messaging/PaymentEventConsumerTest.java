@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,18 +38,33 @@ class PaymentEventConsumerTest {
 
     @Test
     void consume_shouldPublishShippingCreated_whenPaymentCompleted() {
+
         String payload = """
                 {
-                  "orderId": 1,
-                  "userId": 10,
-                  "status": "COMPLETED",
-                  "amount": 99.99,
-                  "currency": "EUR",
-                  "createdAt": "2026-05-27T10:00:00Z"
+                "orderId": 1,
+                "userId": 10,
+                "status": "COMPLETED",
+                "amount": 99.99,
+                "currency": "EUR",
+                "createdAt": "2026-05-27T10:00:00Z"
                 }
                 """;
 
-        consumer.consume(payload);
+        ConsumerRecord<String, String> record =
+                new ConsumerRecord<>(
+                        "payment-events",
+                        0,
+                        0L,
+                        "1",
+                        payload
+                );
+
+        record.headers().add(
+                "traceparent",
+                "00-trace-id-span-id-01".getBytes()
+        );
+
+        consumer.consume(record);
 
         verify(shippingEventPublisher)
                 .publishShippingCreated(any(ShippingCreatedEvent.class));
@@ -56,9 +72,19 @@ class PaymentEventConsumerTest {
 
     @Test
     void consume_shouldNotThrow_whenPayloadInvalid() {
+
         String payload = "{ INVALID_JSON";
 
-        assertDoesNotThrow(() -> consumer.consume(payload));
+        ConsumerRecord<String, String> record =
+                new ConsumerRecord<>(
+                        "payment-events",
+                        0,
+                        0L,
+                        "1",
+                        payload
+                );
+
+        assertDoesNotThrow(() -> consumer.consume(record));
 
         verifyNoInteractions(shippingEventPublisher);
     }

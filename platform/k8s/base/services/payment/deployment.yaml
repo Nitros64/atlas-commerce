@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
         - name: payment
-          image: nitros64/payment-service:1.0.6
+          image: nitros64/payment-service:1.0.7
           imagePullPolicy: Always
           ports:
             - containerPort: 8088
@@ -48,19 +48,19 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8088
-            initialDelaySeconds: 10
+            initialDelaySeconds: 30
             periodSeconds: 10
-            timeoutSeconds: 3
-            failureThreshold: 30
+            timeoutSeconds: 10
+            failureThreshold: 45
 
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
               port: 8088
-            initialDelaySeconds: 60
-            periodSeconds: 20
-            timeoutSeconds: 3
-            failureThreshold: 3
+            initialDelaySeconds: 180
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
 
           readinessProbe:
             httpGet:
