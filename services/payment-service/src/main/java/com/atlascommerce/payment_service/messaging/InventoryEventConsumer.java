@@ -2,6 +2,8 @@ package com.atlascommerce.payment_service.messaging;
 
 import com.atlascommerce.payment_service.event.InventoryReservedEvent;
 import com.atlascommerce.payment_service.event.PaymentCompletedEvent;
+import com.atlascommerce.payment_service.observability.KafkaTracingHelper;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,6 +23,7 @@ public class InventoryEventConsumer {
 
     private final ObjectMapper objectMapper;
     private final PaymentEventPublisher paymentEventPublisher;
+    private final KafkaTracingHelper kafkaTracingHelper;
 
     @KafkaListener(
             topics = "${atlas.kafka.topics.inventory-events}",
@@ -30,7 +33,7 @@ public class InventoryEventConsumer {
         
         String payload = record.value();
         
-        try {
+        try(var ignored = kafkaTracingHelper.startConsumerSpan(record, "kafka consume order-events")) {
             
             String traceparent = getHeader(record, "traceparent");
 

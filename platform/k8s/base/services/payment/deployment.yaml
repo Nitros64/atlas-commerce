@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
         - name: payment
-          image: nitros64/payment-service:1.0.7
+          image: nitros64/payment-service:1.0.8
           imagePullPolicy: Always
           ports:
             - containerPort: 8088

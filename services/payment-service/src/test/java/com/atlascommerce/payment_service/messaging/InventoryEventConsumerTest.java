@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.atlascommerce.payment_service.event.PaymentCompletedEvent;
+import com.atlascommerce.payment_service.observability.KafkaTracingHelper;
 
 import tools.jackson.databind.ObjectMapper;
 
@@ -23,13 +24,16 @@ class InventoryEventConsumerTest {
     @Mock
     private PaymentEventPublisher paymentEventPublisher;
 
+    @Mock
+    private KafkaTracingHelper kafkaTracingHelper;
+
     private ObjectMapper objectMapper;
     private InventoryEventConsumer consumer;
 
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        consumer = new InventoryEventConsumer(objectMapper, paymentEventPublisher);
+        consumer = new InventoryEventConsumer(objectMapper, paymentEventPublisher, kafkaTracingHelper);
     }
 
     @Test

@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.atlascommerce.shipping_service.event.ShippingCreatedEvent;
+import com.atlascommerce.shipping_service.observability.KafkaTracingHelper;
 
 import tools.jackson.databind.ObjectMapper;
 
@@ -22,6 +23,9 @@ class PaymentEventConsumerTest {
     @Mock
     private ShippingEventPublisher shippingEventPublisher;
 
+    @Mock
+    private KafkaTracingHelper kafkaTracingHelper;
+
     private ObjectMapper objectMapper;
 
     private PaymentEventConsumer consumer;
@@ -30,10 +34,7 @@ class PaymentEventConsumerTest {
     void setUp() {
         objectMapper = new ObjectMapper();
 
-        consumer = new PaymentEventConsumer(
-                objectMapper,
-                shippingEventPublisher
-        );
+        consumer = new PaymentEventConsumer(objectMapper, shippingEventPublisher, kafkaTracingHelper);
     }
 
     @Test

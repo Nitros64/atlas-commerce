@@ -5,6 +5,8 @@ import com.atlascommerce.inventory_service.event.InventoryFailedItemEvent;
 import com.atlascommerce.inventory_service.event.InventoryReservedEvent;
 import com.atlascommerce.inventory_service.event.InventoryReservedItemEvent;
 import com.atlascommerce.inventory_service.event.OrderCreatedEvent;
+import com.atlascommerce.inventory_service.observability.KafkaTracingHelper;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -21,6 +23,7 @@ public class OrderEventConsumer {
 
     private final ObjectMapper objectMapper;
     private final InventoryEventPublisher inventoryEventPublisher;
+    private final KafkaTracingHelper kafkaTracingHelper;
 
     @KafkaListener(topics = "${atlas.kafka.topics.order-events}", groupId = "inventory-service-v20")
     public void consume(ConsumerRecord<String, String> record) {
@@ -28,7 +31,7 @@ public class OrderEventConsumer {
         String payload = record.value();
         String traceparent = getHeader(record, "traceparent");
 
-        try {
+        try (var ignored = kafkaTracingHelper.startConsumerSpan(record, "kafka consume order-events")) {
             OrderCreatedEvent event = objectMapper.readValue(payload, OrderCreatedEvent.class);
 
             log.info("ORDER_CREATED received orderId={} traceparent={}", event.orderId(), traceparent);
