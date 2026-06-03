@@ -2,6 +2,9 @@ package com.atlascommerce.inventory_service.messaging;
 
 import com.atlascommerce.inventory_service.event.InventoryFailedEvent;
 import com.atlascommerce.inventory_service.event.InventoryReservedEvent;
+
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +34,8 @@ public class InventoryEventPublisher {
         publish(String.valueOf(event.orderId()), event, "INVENTORY_FAILED", traceparent);
     }
 
+    @CircuitBreaker(name = "inventoryKafkaPublisher", fallbackMethod = "fallbackPublish")
+    @Retry(name = "inventoryKafkaPublisher")
     private void publish(String key, Object event, String eventName, String traceparent) {
         try {
             String payload = objectMapper.writeValueAsString(event);
@@ -55,5 +60,16 @@ public class InventoryEventPublisher {
         } catch (Exception e) {
             throw new RuntimeException("Failed to publish " + eventName, e);
         }
+    }
+    
+    @SuppressWarnings("unused")
+    private void fallbackPublish(String key, Object event, String eventName, String traceparent, Throwable ex) {
+        log.error(
+                "{} Kafka publish fallback. orderId={} topic={} error={}",
+                eventName,
+                key,
+                inventoryEventsTopic,
+                ex.getMessage()
+        );
     }
 }

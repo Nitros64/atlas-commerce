@@ -1,6 +1,9 @@
 package com.atlascommerce.payment_service.messaging;
 
 import com.atlascommerce.payment_service.event.PaymentCompletedEvent;
+
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -26,6 +29,11 @@ public class PaymentEventPublisher {
         publish(String.valueOf(event.orderId()), event, "PAYMENT_COMPLETED", traceparent);
     }
 
+    @CircuitBreaker(
+            name = "paymentKafkaPublisher",
+            fallbackMethod = "fallbackPublish"
+    )
+    @Retry(name = "paymentKafkaPublisher")
     private void publish(
             String key,
             PaymentCompletedEvent event,
@@ -55,5 +63,18 @@ public class PaymentEventPublisher {
         } catch (Exception e) {
             throw new RuntimeException("Failed to publish " + eventName, e);
         }
+    }
+
+    @SuppressWarnings("unused")
+    private void fallbackPublish(String key, Object event, String eventName, String traceparent,
+            Throwable ex) {
+
+        log.error(
+                "{} Kafka publish fallback. orderId={} topic={} error={}",
+                eventName,
+                key,
+                paymentEventsTopic,
+                ex.getMessage()
+        );
     }
 }

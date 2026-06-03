@@ -1,6 +1,7 @@
 package com.atlascommerce.order.messaging.kafka;
 
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,7 +15,8 @@ import com.atlascommerce.order.event.OrderEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.ObjectMapper;
-
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import io.micrometer.tracing.Tracer;
 
 @Component
@@ -32,6 +34,8 @@ public class KafkaOrderEventPublisher implements OrderEventPublisher {
     private String orderEventsTopic;
 
     @Override
+    @CircuitBreaker(name = "orderKafkaPublisher", fallbackMethod = "fallbackPublish")
+    @Retry(name = "orderKafkaPublisher")
     public void publishOrderCreated(OrderCreatedEvent event) {
         try {
 
@@ -58,7 +62,7 @@ public class KafkaOrderEventPublisher implements OrderEventPublisher {
                 );
             }
 
-            kafkaTemplate.send(record);
+            kafkaTemplate.send(record).get(3, TimeUnit.SECONDS);
 
             log.info("Published ORDER_CREATED orderId={}", event.orderId());
 
@@ -66,5 +70,15 @@ public class KafkaOrderEventPublisher implements OrderEventPublisher {
 
             throw new RuntimeException("Failed to publish event", e);
         }
+    }
+
+    @SuppressWarnings("unused")
+    private void fallbackPublish(OrderCreatedEvent event, Throwable ex) {
+
+        log.error(
+                "ORDER_CREATED Kafka fallback. orderId={} error={}",
+                event.orderId(),
+                ex.getMessage()
+        );
     }
 }

@@ -1,6 +1,9 @@
 package com.atlascommerce.shipping_service.messaging;
 
 import com.atlascommerce.shipping_service.event.ShippingCreatedEvent;
+
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +22,11 @@ public class ShippingEventPublisher {
     @Value("${atlas.kafka.topics.shipping-events}")
     private String shippingEventsTopic;
 
+    @CircuitBreaker(
+            name = "shippingKafkaPublisher",
+            fallbackMethod = "fallbackPublish"
+    )
+    @Retry(name = "shippingKafkaPublisher")
     public void publishShippingCreated(ShippingCreatedEvent event) {
 
         try {
@@ -44,5 +52,18 @@ public class ShippingEventPublisher {
                     e
             );
         }
+    }
+
+    @SuppressWarnings("unused")
+    private void fallbackPublish(String key, Object event, String eventName, String traceparent,
+            Throwable ex) {
+
+        log.error(
+                "{} Kafka publish fallback. orderId={} topic={} error={}",
+                eventName,
+                key,
+                shippingEventsTopic,
+                ex.getMessage()
+        );
     }
 }

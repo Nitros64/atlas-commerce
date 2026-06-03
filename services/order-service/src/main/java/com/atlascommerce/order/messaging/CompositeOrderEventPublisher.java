@@ -35,7 +35,6 @@ public class CompositeOrderEventPublisher implements OrderEventPublisher {
             );
         }
 
-        kafkaPublisher.publishOrderCreated(event);
-        log.info("Published order.created event for Kafka");
+        kafkaPublisher.publishOrderCreated(event);        
     }
 }

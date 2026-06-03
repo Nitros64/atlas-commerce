@@ -33,7 +33,8 @@ public class RabbitOrderEventPublisher implements OrderEventPublisher {
         );
         log.info("Published order.created event for RabbitMq orderId={}", event.orderId());
     }
-
+    
+    @SuppressWarnings("unused")
     private void fallbackPublishOrderCreated(OrderCreatedEvent event, Throwable ex) {
         log.warn(
             "RabbitMQ circuit breaker fallback. orderId={} error={}",
