@@ -27,7 +27,6 @@ public class CompositeOrderEventPublisher implements OrderEventPublisher {
     public void publishOrderCreated(OrderCreatedEvent event) {
         try {
             rabbitPublisher.publishOrderCreated(event);
-            log.info("Published order.created event for RabbitMq");
         } catch (Exception e) {
             log.warn(
                     "RabbitMQ publish failed, continuing with Kafka. orderId={} error={}",
