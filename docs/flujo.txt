@@ -32,3 +32,14 @@ Flujo ideal:
 
 order -> inventory -> payment -> shipping -> notification
                  ↘ audit
+
+
+Cosa de Saga
+
+✅ choreography via Kafka
+✅ async events
+✅ state transitions
+✅ failure flow
+✅ idempotent-ish guards
+✅ DLQ
+✅ distributed orchestration behavior

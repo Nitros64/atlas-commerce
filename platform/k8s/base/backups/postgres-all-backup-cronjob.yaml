@@ -1,0 +1,272 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-all-backup
+  namespace: atlas
+spec:
+  schedule: "0 2 * * *"
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 5
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 86400
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels:
+            app: postgres-backup
+        spec:                    
+          restartPolicy: OnFailure
+          containers:
+            - name: pg-backup
+              image: postgres:17-alpine
+              imagePullPolicy: IfNotPresent
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+                limits:
+                  cpu: 1000m
+                  memory: 2Gi
+              env:
+                # Auth service
+                - name: AUTH_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-auth-secret
+                      key: POSTGRES_DB
+                - name: AUTH_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-auth-secret
+                      key: POSTGRES_USER
+                - name: AUTH_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-auth-secret
+                      key: POSTGRES_PASSWORD
+
+                # Catalog
+                - name: CATALOG_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-catalog-secret
+                      key: POSTGRES_DB
+                - name: CATALOG_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-catalog-secret
+                      key: POSTGRES_USER
+                - name: CATALOG_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-catalog-secret
+                      key: POSTGRES_PASSWORD
+
+                # Order
+                - name: ORDER_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-order-secret
+                      key: POSTGRES_DB
+                - name: ORDER_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-order-secret
+                      key: POSTGRES_USER
+                - name: ORDER_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-order-secret
+                      key: POSTGRES_PASSWORD
+
+                # Inventory
+                - name: INVENTORY_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-inventory-secret
+                      key: POSTGRES_DB
+                - name: INVENTORY_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-inventory-secret
+                      key: POSTGRES_USER
+                - name: INVENTORY_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-inventory-secret
+                      key: POSTGRES_PASSWORD
+
+                # Payment
+                - name: PAYMENT_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-payment-secret
+                      key: POSTGRES_DB
+                - name: PAYMENT_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-payment-secret
+                      key: POSTGRES_USER
+                - name: PAYMENT_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-payment-secret
+                      key: POSTGRES_PASSWORD
+
+                # Shipping
+                - name: SHIPPING_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-shipping-secret
+                      key: POSTGRES_DB
+                - name: SHIPPING_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-shipping-secret
+                      key: POSTGRES_USER
+                - name: SHIPPING_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-shipping-secret
+                      key: POSTGRES_PASSWORD
+
+                # Cart
+                - name: CART_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-cart-secret
+                      key: POSTGRES_DB
+                - name: CART_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-cart-secret
+                      key: POSTGRES_USER
+                - name: CART_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-cart-secret
+                      key: POSTGRES_PASSWORD
+
+                # Notification
+                - name: NOTIFICATION_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-notification-secret
+                      key: POSTGRES_DB
+                - name: NOTIFICATION_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-notification-secret
+                      key: POSTGRES_USER
+                - name: NOTIFICATION_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-notification-secret
+                      key: POSTGRES_PASSWORD
+                # Audit
+                - name: AUDIT_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-audit-secret
+                      key: POSTGRES_DB
+                - name: AUDIT_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-audit-secret
+                      key: POSTGRES_USER
+                - name: AUDIT_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-audit-secret
+                      key: POSTGRES_PASSWORD
+
+                # Coupon
+                - name: COUPON_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-coupon-secret
+                      key: POSTGRES_DB
+
+                - name: COUPON_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-coupon-secret
+                      key: POSTGRES_USER
+
+                - name: COUPON_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-coupon-secret
+                      key: POSTGRES_PASSWORD      
+
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -u
+
+                  BACKUP_DATE=$(date +%Y%m%d-%H%M%S)
+                  FAILED=0
+
+                  backup_db () {
+                    SERVICE=$1
+                    HOST=$2
+                    DB=$3
+                    USER=$4
+                    PASSWORD=$5
+
+                    echo "=== Starting backup for $SERVICE ($DB) ==="
+
+                    mkdir -p /backups/$SERVICE
+
+                    if PGPASSWORD="$PASSWORD" pg_dump \
+                      -h "$HOST" \
+                      -U "$USER" \
+                      -d "$DB" \
+                      -F c \
+                      -Z 9 \
+                      -f "/backups/$SERVICE/${DB}-${BACKUP_DATE}.dump"; then
+
+                      echo "✓ Backup completed for $SERVICE"
+                      ls -lh "/backups/$SERVICE/${DB}-${BACKUP_DATE}.dump"
+                    else
+                      echo "✗ Backup failed for $SERVICE"
+                      FAILED=1
+                    fi
+                  }
+
+                  backup_db auth postgres-auth "$AUTH_DB" "$AUTH_USER" "$AUTH_PASSWORD"
+                  backup_db catalog postgres-catalog "$CATALOG_DB" "$CATALOG_USER" "$CATALOG_PASSWORD"
+                  backup_db order postgres-order "$ORDER_DB" "$ORDER_USER" "$ORDER_PASSWORD"
+                  backup_db inventory postgres-inventory "$INVENTORY_DB" "$INVENTORY_USER" "$INVENTORY_PASSWORD"
+                  backup_db payment postgres-payment "$PAYMENT_DB" "$PAYMENT_USER" "$PAYMENT_PASSWORD"
+                  backup_db shipping postgres-shipping "$SHIPPING_DB" "$SHIPPING_USER" "$SHIPPING_PASSWORD"
+                  backup_db cart postgres-cart "$CART_DB" "$CART_USER" "$CART_PASSWORD"
+                  backup_db notification postgres-notification "$NOTIFICATION_DB" "$NOTIFICATION_USER" "$NOTIFICATION_PASSWORD"
+                  backup_db audit postgres-audit "$AUDIT_DB" "$AUDIT_USER" "$AUDIT_PASSWORD"
+                  backup_db coupon postgres-coupon "$COUPON_DB" "$COUPON_USER" "$COUPON_PASSWORD" 
+                  
+                  echo "=== Cleaning old backups (> 7 days) ==="
+                  find /backups -type f -name "*.dump" -mtime +7 -delete
+
+                  echo "=== Backup disk usage ==="
+                  df -h /backups
+
+                  if [ "$FAILED" -eq 1 ]; then
+                    echo "One or more backups failed"
+                    exit 1
+                  fi
+
+                  echo "=== All PostgreSQL backups completed successfully ==="
+
+              volumeMounts:
+                - name: backups
+                  mountPath: /backups
+
+          volumes:
+            - name: backups
+              persistentVolumeClaim:
+                claimName: postgres-backups

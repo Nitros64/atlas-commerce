@@ -14,6 +14,10 @@ spec:
         - podSelector:
             matchLabels:
               app: notification
+
+        - podSelector:
+            matchLabels:
+              app: postgres-backup      
       ports:
         - protocol: TCP
           port: 5432
