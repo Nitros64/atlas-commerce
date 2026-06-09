@@ -25,9 +25,29 @@ public class SecurityConfig {
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(
                                 "/actuator/**",
+
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/webjars/**",
+                                "/v3/api-docs/**",
+
+                                "/auth/v3/api-docs",
+                                "/catalog/v3/api-docs",
+                                "/order/v3/api-docs",
+                                "/inventory/v3/api-docs",
+                                "/cart/v3/api-docs",
+                                "/pricing/v3/api-docs",
+                                "/coupon/v3/api-docs",
+                                "/payment/v3/api-docs",
+                                "/shipping/v3/api-docs",
+                                "/notification/v3/api-docs",
+                                "/audit/v3/api-docs",
+
                                 "/api/v1/auth/**"
                         ).permitAll()
+
                         .pathMatchers("/api/v1/**").authenticated()
+
                         .anyExchange().denyAll()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2

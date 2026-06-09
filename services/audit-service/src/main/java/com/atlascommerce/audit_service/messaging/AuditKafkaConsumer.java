@@ -10,8 +10,6 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor

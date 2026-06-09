@@ -4,3 +4,8 @@ server:
 spring:
   application:
     name: gateway-service
+
+
+security:
+  jwt:
+    secret: ${SECURITY_JWT_SECRET:3w4ertyghujertfgh}     

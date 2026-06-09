@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
         - name: inventory
-          image: nitros64/inventory-service:1.0.17
+          image: nitros64/inventory-service:1.0.18
           imagePullPolicy: Always
           ports:
             - containerPort: 8084

@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
         - name: notification
-          image: nitros64/notification-service:1.0.2
+          image: nitros64/notification-service:1.0.3
           imagePullPolicy: Always
           ports:
             - containerPort: 8090
@@ -48,8 +48,8 @@ spec:
               cpu: "100m"
               memory: "256Mi"
             limits:
-              cpu: "500m"
-              memory: "512Mi"
+              cpu: "700m"
+              memory: "1Gi"
                  
           startupProbe:
             httpGet:

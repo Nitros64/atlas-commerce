@@ -78,6 +78,83 @@ spring:
               predicates:
                 - Path=/api/v1/audit-events/**    
 
+            - id: auth-openapi
+              uri: http://auth-service
+              predicates:
+                - Path=/auth/v3/api-docs
+              filters:
+                - StripPrefix=1
+
+            - id: catalog-openapi
+              uri: http://catalog-service
+              predicates:
+                - Path=/catalog/v3/api-docs
+              filters:
+                - StripPrefix=1
+
+            - id: order-openapi
+              uri: http://order-service
+              predicates:
+                - Path=/order/v3/api-docs
+              filters:
+                - StripPrefix=1
+
+            - id: inventory-openapi
+              uri: http://inventory-service
+              predicates:
+                - Path=/inventory/v3/api-docs
+              filters:
+                - StripPrefix=1
+
+            - id: cart-openapi
+              uri: http://cart-service
+              predicates:
+                - Path=/cart/v3/api-docs
+              filters:
+                - StripPrefix=1
+
+            - id: coupon-openapi
+              uri: http://coupon-service
+              predicates:
+                - Path=/coupon/v3/api-docs
+              filters:
+                - StripPrefix=1
+
+            - id: payment-openapi
+              uri: http://payment-service
+              predicates:
+                - Path=/payment/v3/api-docs
+              filters:
+                - StripPrefix=1
+
+            - id: shipping-openapi
+              uri: http://shipping-service
+              predicates:
+                - Path=/shipping/v3/api-docs
+              filters:
+                - StripPrefix=1
+
+            - id: notification-openapi
+              uri: http://notification-service
+              predicates:
+                - Path=/notification/v3/api-docs
+              filters:
+                - StripPrefix=1
+
+            - id: audit-openapi
+              uri: http://audit-service
+              predicates:
+                - Path=/audit/v3/api-docs
+              filters:
+                - StripPrefix=1   
+
+            - id: pricing-openapi
+              uri: http://pricing-service
+              predicates:
+                - Path=/pricing/v3/api-docs
+              filters:
+                - StripPrefix=1     
+
 security:
   jwt:
     secret: ${SECURITY_JWT_SECRET}    
@@ -117,3 +194,29 @@ management:
       service:
         namespace: atlas
         name: gateway-service    
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: /auth-service
+        url: /auth/v3/api-docs
+      - name: /catalog-service
+        url: /catalog/v3/api-docs
+      - name: order-service
+        url: /order/v3/api-docs
+      - name: inventory-service
+        url: /inventory/v3/api-docs
+      - name: cart-service
+        url: /cart/v3/api-docs
+      - name: coupon-service
+        url: /coupon/v3/api-docs
+      - name: payment-service
+        url: /payment/v3/api-docs
+      - name: shipping-service
+        url: /shipping/v3/api-docs
+      - name: notification-service
+        url: /notification/v3/api-docs
+      - name: audit-service
+        url: /audit/v3/api-docs 
+      - name: /pricing-service
+        url: /pricing/v3/api-docs         

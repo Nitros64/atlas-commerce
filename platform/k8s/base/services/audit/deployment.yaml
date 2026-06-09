@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
         - name: audit
-          image: nitros64/audit-service:1.0.2
+          image: nitros64/audit-service:1.0.3
           imagePullPolicy: Always
           ports:
             - containerPort: 8093
@@ -47,8 +47,8 @@ spec:
               cpu: "100m"
               memory: "256Mi"
             limits:
-              cpu: "500m"
-              memory: "512Mi"
+              cpu: "700m"
+              memory: "1Gi"
               
           startupProbe:
             httpGet:

@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
         - name: shipping
-          image: nitros64/shipping-service:1.0.8
+          image: nitros64/shipping-service:1.0.9  
           imagePullPolicy: Always
           ports:
             - containerPort: 8089
@@ -72,8 +72,8 @@ spec:
           
           resources:
             requests:
-              cpu: "100m"
-              memory: "256Mi"
-            limits:
-              cpu: "500m"
+              cpu: "150m"
               memory: "512Mi"
+            limits:
+              cpu: "700m"
+              memory: "1Gi"
