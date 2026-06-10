@@ -1,0 +1,37 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Catalog Service - local",
+      "request": "launch",
+      "mainClass": "com.atlascommerce.catalog.CatalogServiceApplication",
+      "projectName": "catalog-service",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "local",
+
+        "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5433/catalogdb",
+        "SPRING_DATASOURCE_USERNAME": "atlas",
+        "SPRING_DATASOURCE_PASSWORD": "atlas",
+        "SPRING_DATASOURCE_DRIVER_CLASS_NAME": "org.postgresql.Driver",
+
+        "SPRING_DATA_REDIS_HOST": "localhost",
+        "SPRING_DATA_REDIS_PORT": "6379",
+        "SPRING_DATA_REDIS_PASSWORD": "atlas-redis-pass",
+
+        "SECURITY_JWT_SECRET": "dev-local-secret-change-me",
+
+        "KAFKA_BOOTSTRAP_SERVERS": "localhost:9092",
+        "ORDER_EVENTS_TOPIC": "order-events"
+      },
+      "vmArgs": [
+        "-XX:+ShowCodeDetailsInExceptionMessages",
+        "-Dspring.output.ansi.enabled=always"
+      ]
+    }
+
+
+  ]
+}

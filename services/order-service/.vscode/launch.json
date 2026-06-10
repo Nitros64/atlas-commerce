@@ -1,0 +1,48 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Order Service - local",
+      "request": "launch",
+      "mainClass": "com.atlascommerce.order.OrderServiceApplication",
+      "projectName": "order-service",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "local",
+
+        "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5435/orderdb",
+        "SPRING_DATASOURCE_USERNAME": "atlas",
+        "SPRING_DATASOURCE_PASSWORD": "atlas",
+        "SPRING_DATASOURCE_DRIVER_CLASS_NAME": "org.postgresql.Driver",
+
+        "SPRING_DATA_REDIS_HOST": "localhost",
+        "SPRING_DATA_REDIS_PORT": "6379",
+        "SPRING_DATA_REDIS_PASSWORD": "atlas-redis-pass",
+
+        "SECURITY_JWT_SECRET": "dev-local-secret-change-me",
+
+        "SPRING_RABBITMQ_HOST": "localhost",
+        "SPRING_RABBITMQ_PORT": "5672",
+        "SPRING_RABBITMQ_USERNAME": "atlas",
+        "SPRING_RABBITMQ_PASSWORD": "atlas",
+
+        "KAFKA_BOOTSTRAP_SERVERS": "localhost:9092",
+        "ORDER_EVENTS_TOPIC": "order-events",
+        "INVENTORY_EVENTS_TOPIC": "inventory-events",
+        "PAYMENT_EVENTS_TOPIC": "payment-events",
+        "SHIPPING_EVENTS_TOPIC": "shipping-events",
+        "INVENTORY_EVENTS_DLT_TOPIC": "inventory-events.DLT",
+        "PAYMENT_EVENTS_DLT_TOPIC": "payment-events.DLT",
+        "SHIPPING_EVENTS_DLT_TOPIC": "shipping-events.DLT"
+      },
+      "vmArgs": [
+        "-XX:+ShowCodeDetailsInExceptionMessages",
+        "-Dspring.output.ansi.enabled=always"
+      ]
+    }
+
+
+  ]
+}

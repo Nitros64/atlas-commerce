@@ -1,0 +1,125 @@
+name: atlas-local
+
+services:
+  redis:
+    image: redis:7
+    container_name: atlas-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--requirepass", "atlas"]
+
+  kafka:
+    image: apache/kafka:4.1.2
+    container_name: atlas-kafka
+    ports:
+      - "9092:9092"
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: atlas-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: atlas
+      RABBITMQ_DEFAULT_PASS: atlas
+
+  postgres-auth:
+    image: postgres:17
+    container_name: atlas-postgres-auth
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: authdb
+      POSTGRES_USER: atlas
+      POSTGRES_PASSWORD: atlas
+
+  postgres-catalog:
+    image: postgres:17
+    container_name: atlas-postgres-catalog
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: catalogdb
+      POSTGRES_USER: atlas
+      POSTGRES_PASSWORD: atlas
+
+  postgres-inventory:
+    image: postgres:17
+    container_name: atlas-postgres-inventory
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: inventorydb
+      POSTGRES_USER: atlas
+      POSTGRES_PASSWORD: atlas
+
+  postgres-order:
+    image: postgres:17
+    container_name: atlas-postgres-order
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_DB: orderdb
+      POSTGRES_USER: atlas
+      POSTGRES_PASSWORD: atlas
+
+  postgres-payment:
+    image: postgres:17
+    container_name: atlas-postgres-payment
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_DB: paymentdb
+      POSTGRES_USER: atlas
+      POSTGRES_PASSWORD: atlas
+
+  postgres-shipping:
+    image: postgres:17
+    container_name: atlas-postgres-shipping
+    ports:
+      - "5437:5432"
+    environment:
+      POSTGRES_DB: shippingdb
+      POSTGRES_USER: atlas
+      POSTGRES_PASSWORD: atlas
+
+  postgres-notification:
+    image: postgres:17
+    container_name: atlas-postgres-notification
+    ports:
+      - "5438:5432"
+    environment:
+      POSTGRES_DB: notificationdb
+      POSTGRES_USER: atlas
+      POSTGRES_PASSWORD: atlas
+
+  postgres-audit:
+    image: postgres:17
+    container_name: atlas-postgres-audit
+    ports:
+      - "5439:5432"
+    environment:
+      POSTGRES_DB: auditdb
+      POSTGRES_USER: atlas
+      POSTGRES_PASSWORD: atlas
+
+  postgres-coupon:
+    image: postgres:17
+    container_name: atlas-postgres-coupon
+    ports:
+      - "5440:5432"
+    environment:
+      POSTGRES_DB: coupondb
+      POSTGRES_USER: atlas
+      POSTGRES_PASSWORD: atlas
+
+  postgres-cart:
+    image: postgres:17
+    container_name: atlas-postgres-cart
+    ports:
+      - "5441:5432"
+    environment:
+      POSTGRES_DB: cartdb
+      POSTGRES_USER: atlas
+      POSTGRES_PASSWORD: atlas

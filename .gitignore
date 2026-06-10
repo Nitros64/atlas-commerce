@@ -17,7 +17,11 @@ target/
 *.iws
 *.ipr
 
-.vscode/
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/tasks.json
+!.vscode/extensions.json
 
 # Eclipse / STS
 .apt_generated
@@ -68,3 +72,4 @@ docker-compose.override.yml
 # =========================
 
 para_produccion.txt
+flujo.txt

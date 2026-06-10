@@ -1,0 +1,329 @@
+{
+  "version": "0.2.0",
+  "configurations": [    
+    {
+      "type": "java",
+      "name": "Auth Service - local",
+      "request": "launch",
+      "mainClass": "com.atlascommerce.auth.AuthServiceApplication",
+      "projectName": "auth-service",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "local",
+        "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5432/authdb",
+        "SPRING_DATASOURCE_USERNAME": "atlas",
+        "SPRING_DATASOURCE_PASSWORD": "atlas",
+        "SPRING_DATASOURCE_DRIVER_CLASS_NAME": "org.postgresql.Driver",
+        "SPRING_DATA_REDIS_HOST": "localhost",
+        "SPRING_DATA_REDIS_PORT": "6379",
+        "SPRING_DATA_REDIS_PASSWORD": "atlas-redis-pass",
+        "SECURITY_JWT_SECRET": "dev-local-secret-change-me",
+        "SECURITY_JWT_EXPIRATION_MS": "3600000",
+        "SECURITY_JWT_REFRESH_EXPIRATION_MS": "86400000"
+      },
+      "vmArgs": [
+        "-XX:+ShowCodeDetailsInExceptionMessages",
+        "-Dspring.output.ansi.enabled=always"
+      ]
+    },
+    {
+      "type": "java",
+      "name": "Catalog Service - local",
+      "request": "launch",
+      "mainClass": "com.atlascommerce.catalog.CatalogServiceApplication",
+      "projectName": "catalog-service",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "local",
+        "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5433/catalogdb",
+        "SPRING_DATASOURCE_USERNAME": "atlas",
+        "SPRING_DATASOURCE_PASSWORD": "atlas",
+        "SPRING_DATASOURCE_DRIVER_CLASS_NAME": "org.postgresql.Driver",
+        "SPRING_DATA_REDIS_HOST": "localhost",
+        "SPRING_DATA_REDIS_PORT": "6379",
+        "SPRING_DATA_REDIS_PASSWORD": "atlas-redis-pass",
+        "SECURITY_JWT_SECRET": "dev-local-secret-change-me",
+        "KAFKA_BOOTSTRAP_SERVERS": "localhost:9092",
+        "ORDER_EVENTS_TOPIC": "order-events"
+      },
+      "vmArgs": [
+        "-XX:+ShowCodeDetailsInExceptionMessages",
+        "-Dspring.output.ansi.enabled=always"
+      ]
+    },
+    {
+      "type": "java",
+      "name": "Inventory Service - local",
+      "request": "launch",
+      "mainClass": "com.atlascommerce.inventory_service.InventoryServiceApplication",
+      "projectName": "inventory-service",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "local",
+        "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5434/inventorydb",
+        "SPRING_DATASOURCE_USERNAME": "atlas",
+        "SPRING_DATASOURCE_PASSWORD": "atlas",
+        "SPRING_DATASOURCE_DRIVER_CLASS_NAME": "org.postgresql.Driver",
+        "SECURITY_JWT_SECRET": "dev-local-secret-change-me",
+        "KAFKA_BOOTSTRAP_SERVERS": "localhost:9092",
+        "ORDER_EVENTS_TOPIC": "order-events",
+        "INVENTORY_EVENTS_TOPIC": "inventory-events"
+      },
+      "vmArgs": [
+        "-XX:+ShowCodeDetailsInExceptionMessages",
+        "-Dspring.output.ansi.enabled=always"
+      ]
+    },
+    {
+      "type": "java",
+      "name": "Order Service - local",
+      "request": "launch",
+      "mainClass": "com.atlascommerce.order.OrderServiceApplication",
+      "projectName": "order-service",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "local",
+        "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5435/orderdb",
+        "SPRING_DATASOURCE_USERNAME": "atlas",
+        "SPRING_DATASOURCE_PASSWORD": "atlas",
+        "SPRING_DATASOURCE_DRIVER_CLASS_NAME": "org.postgresql.Driver",
+        
+        "SPRING_DATA_REDIS_HOST": "localhost",
+        "SPRING_DATA_REDIS_PORT": "6379",
+        "SPRING_DATA_REDIS_PASSWORD": "atlas-redis-pass",
+        
+        "SECURITY_JWT_SECRET": "dev-local-secret-change-me",
+        
+        "SPRING_RABBITMQ_HOST": "localhost",
+        "SPRING_RABBITMQ_PORT": "5672",
+        "SPRING_RABBITMQ_USERNAME": "atlas",
+        "SPRING_RABBITMQ_PASSWORD": "atlas",
+        
+        "KAFKA_BOOTSTRAP_SERVERS": "localhost:9092",
+        "ORDER_EVENTS_TOPIC": "order-events",
+        "INVENTORY_EVENTS_TOPIC": "inventory-events",
+        "PAYMENT_EVENTS_TOPIC": "payment-events",
+        "SHIPPING_EVENTS_TOPIC": "shipping-events",
+        "INVENTORY_EVENTS_DLT_TOPIC": "inventory-events.DLT",
+        "PAYMENT_EVENTS_DLT_TOPIC": "payment-events.DLT",
+        "SHIPPING_EVENTS_DLT_TOPIC": "shipping-events.DLT"
+      },
+      "vmArgs": [
+        "-XX:+ShowCodeDetailsInExceptionMessages",
+        "-Dspring.output.ansi.enabled=always"
+      ]
+    },
+
+    {
+      "type": "java",
+      "name": "Payment Service - local",
+      "request": "launch",
+      "mainClass": "com.atlascommerce.payment_service.PaymentServiceApplication",
+      "projectName": "payment-service",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "local",
+
+        "SERVER_PORT": "8088",
+
+        "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5436/paymentdb",
+        "SPRING_DATASOURCE_USERNAME": "atlas",
+        "SPRING_DATASOURCE_PASSWORD": "atlas",
+        "SPRING_DATASOURCE_DRIVER_CLASS_NAME": "org.postgresql.Driver",
+
+        "SECURITY_JWT_SECRET": "dev-local-secret-change-me",
+
+        "KAFKA_BOOTSTRAP_SERVERS": "localhost:9092",
+        "INVENTORY_EVENTS_TOPIC": "inventory-events",
+        "PAYMENT_EVENTS_TOPIC": "payment-events"
+      },
+      "vmArgs": [
+        "-XX:+ShowCodeDetailsInExceptionMessages",
+        "-Dspring.output.ansi.enabled=always"
+      ]
+    },
+    {
+      "type": "java",
+      "name": "Shipping Service - local",
+      "request": "launch",
+      "mainClass": "com.atlascommerce.shipping_service.ShippingServiceApplication",
+      "projectName": "shipping-service",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "local",
+
+        "SERVER_PORT": "8089",
+
+        "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5437/shippingdb",
+        "SPRING_DATASOURCE_USERNAME": "atlas",
+        "SPRING_DATASOURCE_PASSWORD": "atlas",
+        "SPRING_DATASOURCE_DRIVER_CLASS_NAME": "org.postgresql.Driver",
+
+        "SECURITY_JWT_SECRET": "dev-local-secret-change-me",
+
+        "KAFKA_BOOTSTRAP_SERVERS": "localhost:9092",
+        "PAYMENT_EVENTS_TOPIC": "payment-events",
+        "SHIPPING_EVENTS_TOPIC": "shipping-events"
+      },
+      "vmArgs": [
+        "-XX:+ShowCodeDetailsInExceptionMessages",
+        "-Dspring.output.ansi.enabled=always"
+      ]
+    },
+    {
+      "type": "java",
+      "name": "Notification Service - local",
+      "request": "launch",
+      "mainClass": "com.atlascommerce.notification_service.NotificationServiceApplication",
+      "projectName": "notification-service",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "local",
+
+        "SERVER_PORT": "8090",
+
+        "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5438/notificationdb",
+        "SPRING_DATASOURCE_USERNAME": "atlas",
+        "SPRING_DATASOURCE_PASSWORD": "atlas",
+        "SPRING_DATASOURCE_DRIVER_CLASS_NAME": "org.postgresql.Driver",
+
+        "SECURITY_JWT_SECRET": "dev-local-secret-change-me",
+
+        "KAFKA_BOOTSTRAP_SERVERS": "localhost:9092",
+        "SHIPPING_EVENTS_TOPIC": "shipping-events"
+      },
+      "vmArgs": [
+        "-XX:+ShowCodeDetailsInExceptionMessages",
+        "-Dspring.output.ansi.enabled=always"
+      ]
+    },
+    {
+      "type": "java",
+      "name": "Audit Service - local",
+      "request": "launch",
+      "mainClass": "com.atlascommerce.audit_service.AuditServiceApplication",
+      "projectName": "audit-service",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "local",
+
+        "SERVER_PORT": "8093",
+
+        "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5439/auditdb",
+        "SPRING_DATASOURCE_USERNAME": "atlas",
+        "SPRING_DATASOURCE_PASSWORD": "atlas",
+        "SPRING_DATASOURCE_DRIVER_CLASS_NAME": "org.postgresql.Driver",
+
+        "SECURITY_JWT_SECRET": "dev-local-secret-change-me",
+
+        "KAFKA_BOOTSTRAP_SERVERS": "localhost:9092",
+        "ORDER_EVENTS_TOPIC": "order-events",
+        "INVENTORY_EVENTS_TOPIC": "inventory-events",
+        "PAYMENT_EVENTS_TOPIC": "payment-events",
+        "SHIPPING_EVENTS_TOPIC": "shipping-events"
+      },
+      "vmArgs": [
+        "-XX:+ShowCodeDetailsInExceptionMessages",
+        "-Dspring.output.ansi.enabled=always"
+      ]
+    },
+    {
+      "type": "java",
+      "name": "Gateway Service - local",
+      "request": "launch",
+      "mainClass": "com.atlascommerce.gateway_service.GatewayServiceApplication",
+      "projectName": "gateway-service",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "local",
+        "SPRING_DATA_REDIS_HOST": "localhost",
+        "SPRING_DATA_REDIS_PORT": "6379",
+        "SPRING_DATA_REDIS_PASSWORD": "atlas",
+        "SECURITY_JWT_SECRET": "dev-local-secret-change-me"
+      },
+      "vmArgs": [
+        "-XX:+ShowCodeDetailsInExceptionMessages",
+        "-Dspring.output.ansi.enabled=always"
+      ]
+    },
+
+    {
+      "type": "java",
+      "name": "Pricing Service - local",
+      "request": "launch",
+      "mainClass": "com.atlascommerce.pricing_service.PricingServiceApplication",
+      "projectName": "pricing-service",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "local",
+        "SERVER_PORT": "8086",
+        "SECURITY_JWT_SECRET": "dev-local-secret-change-me"
+      },
+      "vmArgs": [
+        "-XX:+ShowCodeDetailsInExceptionMessages",
+        "-Dspring.output.ansi.enabled=always"
+      ]
+    },
+
+    {
+      "type": "java",
+      "name": "Coupon Service - local",
+      "request": "launch",
+      "mainClass": "com.atlascommerce.coupon_service.CouponServiceApplication",
+      "projectName": "coupon-service",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "local",
+
+        "SERVER_PORT": "8087",
+
+        "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5440/coupondb",
+        "SPRING_DATASOURCE_USERNAME": "atlas",
+        "SPRING_DATASOURCE_PASSWORD": "atlas",
+        "SPRING_DATASOURCE_DRIVER_CLASS_NAME": "org.postgresql.Driver",
+
+        "SECURITY_JWT_SECRET": "dev-local-secret-change-me"
+      },
+      "vmArgs": [
+        "-XX:+ShowCodeDetailsInExceptionMessages",
+        "-Dspring.output.ansi.enabled=always"
+      ]
+    },
+    {
+      "type": "java",
+      "name": "Cart Service - local",
+      "request": "launch",
+      "mainClass": "com.atlascommerce.cart_service.CartServiceApplication",
+      "projectName": "cart-service",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "local",
+
+        "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5441/cartdb",
+        "SPRING_DATASOURCE_USERNAME": "atlas",
+        "SPRING_DATASOURCE_PASSWORD": "atlas",
+        "SPRING_DATASOURCE_DRIVER_CLASS_NAME": "org.postgresql.Driver",
+
+        "SECURITY_JWT_SECRET": "dev-local-secret-change-me"
+      },
+      "vmArgs": [
+        "-XX:+ShowCodeDetailsInExceptionMessages",
+        "-Dspring.output.ansi.enabled=always"
+      ]
+      
+    }
+
+  ]
+}

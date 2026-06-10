@@ -1,0 +1,4 @@
+docker run -d \
+  --name atlas-redis \
+  -p 6379:6379 \
+  redis:7-alpine redis-server --requirepass atlas-redis-pass

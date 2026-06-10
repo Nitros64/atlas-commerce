@@ -1,0 +1,68 @@
+#Auth Service
+
+docker run -d \
+  --name atlas-postgres-auth \
+  -e POSTGRES_DB=authdb \
+  -e POSTGRES_USER=atlas \
+  -e POSTGRES_PASSWORD=atlas \
+  -p 5432:5432 \
+  postgres:16-alpine
+
+#Catalog
+docker run -d \
+  --name atlas-postgres-catalog \
+  -e POSTGRES_DB=catalogdb \
+  -e POSTGRES_USER=atlas \
+  -e POSTGRES_PASSWORD=atlas \
+  -p 5433:5432 \
+  postgres:16-alpine
+
+#Inventory
+
+docker run -d \
+  --name atlas-postgres-inventory \
+  -e POSTGRES_DB=inventorydb \
+  -e POSTGRES_USER=atlas \
+  -e POSTGRES_PASSWORD=atlas \
+  -p 5434:5432 \
+  postgres:16-alpine
+
+#Order
+
+docker run -d \
+  --name atlas-postgres-order \
+  -e POSTGRES_DB=orderdb \
+  -e POSTGRES_USER=atlas \
+  -e POSTGRES_PASSWORD=atlas \
+  -p 5435:5432 \
+  postgres:17  
+
+#Payment
+
+docker run -d \
+  --name atlas-postgres-payment \
+  -e POSTGRES_DB=paymentdb \
+  -e POSTGRES_USER=atlas \
+  -e POSTGRES_PASSWORD=atlas \
+  -p 5436:5432 \
+  postgres:17
+
+#Shipping
+
+docker run -d \
+  --name atlas-postgres-shipping \
+  -e POSTGRES_DB=shippingdb \
+  -e POSTGRES_USER=atlas \
+  -e POSTGRES_PASSWORD=atlas \
+  -p 5437:5432 \
+  postgres:17   
+
+#Notification
+
+docker run -d \
+  --name atlas-postgres-notification \
+  -e POSTGRES_DB=notificationdb \
+  -e POSTGRES_USER=atlas \
+  -e POSTGRES_PASSWORD=atlas \
+  -p 5438:5432 \
+  postgres:17
