@@ -6,7 +6,7 @@ services:
     container_name: atlas-redis
     ports:
       - "6379:6379"
-    command: ["redis-server", "--requirepass", "atlas"]
+    command: ["redis-server", "--requirepass", "atlas-redis-pass"]
 
   kafka:
     image: apache/kafka:4.1.2

@@ -24,7 +24,7 @@ start_or_create() {
 
 start_or_create "atlas-redis" "redis:7" \
   -p 6379:6379 \
-  redis-server --requirepass atlas
+  redis-server --requirepass atlas-redis-pass
 
 start_or_create "atlas-kafka" "apache/kafka:4.1.2" \
   -p 9092:9092

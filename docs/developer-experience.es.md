@@ -65,8 +65,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\dev-up.ps1
 ```
 
 ### Linux
-
 ```bash
+chmod +x ./scripts/dev-up.sh
 ./scripts/dev-up.sh
 ```
 
@@ -81,6 +81,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\run-services.ps1
 ### Linux
 
 ```bash
+chmod +x ./scripts/run-services.sh
 ./scripts/run-services.sh
 ```
 
@@ -95,6 +96,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\health-check.ps1
 ### Linux
 
 ```bash
+chmod +x ./scripts/health-check.sh
 ./scripts/health-check.sh
 ```
 
@@ -126,6 +128,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\dev-stop-services.ps1
 ### Linux
 
 ```bash
+chmod +x ./scripts/dev-stop-services.sh
 ./scripts/dev-stop-services.sh
 ```
 
