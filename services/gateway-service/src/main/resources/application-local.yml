@@ -59,6 +59,21 @@ spring:
               predicates:
                 - Path=/api/v1/notifications/**
 
+            - id: cart-service
+              uri: http://localhost:8085
+              predicates:
+                - Path=/api/v1/carts/**
+
+            - id: pricing-service
+              uri: http://localhost:8086
+              predicates:
+                - Path=/api/v1/pricing/**
+
+            - id: coupon-service
+              uri: http://localhost:8087
+              predicates:
+                - Path=/api/v1/coupons/**    
+
             - id: audit-service
               uri: http://localhost:8093
               predicates:
@@ -119,6 +134,27 @@ spring:
                 - Path=/audit/v3/api-docs
               filters:
                 - StripPrefix=1
+
+            - id: cart-openapi
+              uri: http://localhost:8085
+              predicates:
+                - Path=/cart/v3/api-docs
+              filters:
+                - StripPrefix=1
+
+            - id: pricing-openapi
+              uri: http://localhost:8086
+              predicates:
+                - Path=/pricing/v3/api-docs
+              filters:
+                - StripPrefix=1
+
+            - id: coupon-openapi
+              uri: http://localhost:8087
+              predicates:
+                - Path=/coupon/v3/api-docs
+              filters:
+                - StripPrefix=1    
 
 security:
   jwt:
@@ -189,3 +225,9 @@ springdoc:
         url: /notification/v3/api-docs
       - name: audit-service
         url: /audit/v3/api-docs
+      - name: pricing-service
+        url: /pricing/v3/api-docs
+      - name: coupon-service
+        url: /coupon/v3/api-docs        
+      - name: cart-service
+        url: /cart/v3/api-docs       
