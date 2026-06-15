@@ -20,10 +20,9 @@ public class CartService {
     private final CartRepository repository;
     private final CartMapper mapper;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public CartResponse getCart(Long userId) {
-        Cart cart = repository.findByUserId(userId)
-                .orElseThrow(() -> new CartNotFoundException(userId));
+        Cart cart = getOrCreateCart(userId);
 
         return mapper.toResponse(cart);
     }
