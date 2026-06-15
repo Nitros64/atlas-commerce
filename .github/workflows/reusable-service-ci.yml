@@ -129,5 +129,3 @@ jobs:
           name: ${{ inputs.service-name }} Tests
           path: ${{ inputs.service-path }}/target/surefire-reports/*.xml
           reporter: java-junit
-          
-          # CI trigger
