@@ -1,0 +1,94 @@
+{{- if .Values.kafka.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.kafka.deployment.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.kafka.labels.app }}
+spec:
+  replicas: {{ .Values.kafka.deployment.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.kafka.labels.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.kafka.labels.app }}
+        tier: {{ .Values.kafka.labels.tier }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.kafka.deployment.terminationGracePeriodSeconds }}
+      securityContext:
+        fsGroup: {{ .Values.kafka.security.fsGroup }}
+
+      initContainers:
+        - name: kafka-volume-permissions
+          image: "{{ .Values.kafka.initContainer.image.repository }}:{{ .Values.kafka.initContainer.image.tag }}"
+          imagePullPolicy: {{ .Values.kafka.initContainer.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - chown -R {{ .Values.kafka.security.runAsUser }}:{{ .Values.kafka.security.runAsGroup }} /var/lib/kafka/data
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: kafka-data
+              mountPath: /var/lib/kafka/data
+
+      containers:
+        - name: {{ .Values.kafka.name }}
+          image: "{{ .Values.kafka.deployment.image.repository }}:{{ .Values.kafka.deployment.image.tag }}"
+          imagePullPolicy: {{ .Values.kafka.deployment.image.pullPolicy }}
+
+          ports:
+            - containerPort: {{ .Values.kafka.service.brokerPort }}
+              name: broker
+            - containerPort: {{ .Values.kafka.service.controllerPort }}
+              name: controller
+
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.kafka.brokerConfigMapName }}
+
+          securityContext:
+            runAsUser: {{ .Values.kafka.security.runAsUser }}
+            runAsGroup: {{ .Values.kafka.security.runAsGroup }}
+
+          resources:
+            requests:
+              cpu: {{ .Values.kafka.resources.requests.cpu | quote }}
+              memory: {{ .Values.kafka.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.kafka.resources.limits.cpu | quote }}
+              memory: {{ .Values.kafka.resources.limits.memory | quote }}
+
+          volumeMounts:
+            - name: kafka-data
+              mountPath: /var/lib/kafka/data
+
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.kafka.service.brokerPort }}
+            initialDelaySeconds: {{ .Values.kafka.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.kafka.probes.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.kafka.probes.readiness.failureThreshold }}
+
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.kafka.service.brokerPort }}
+            initialDelaySeconds: {{ .Values.kafka.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.kafka.probes.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.kafka.probes.liveness.failureThreshold }}
+
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.kafka.service.brokerPort }}
+            initialDelaySeconds: {{ .Values.kafka.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.kafka.probes.startup.periodSeconds }}
+            failureThreshold: {{ .Values.kafka.probes.startup.failureThreshold }}
+
+      volumes:
+        - name: kafka-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.kafka.pvc.name }}
+{{- end }}

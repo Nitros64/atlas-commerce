@@ -20,8 +20,8 @@ spec:
     spec:
       containers:
         - name: {{ .Values.gateway.labels.app }}
-          image: {{ .Values.gateway.deployment.image | quote }}
-          imagePullPolicy: {{ .Values.gateway.deployment.imagePullPolicy }}
+          image: "{{ .Values.gateway.deployment.image.repository }}:{{ .Values.gateway.deployment.image.tag }}"
+          imagePullPolicy: {{ .Values.gateway.deployment.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.gateway.deployment.containerPort }}
 
@@ -48,8 +48,38 @@ spec:
                   name: {{ .Values.gateway.env.redisSecretName }}
                   key: REDIS_PASSWORD
 
-            - name: MANAGEMENT_HEALTH_REDIS_ENABLED
-              value: {{ .Values.gateway.env.managementHealthRedisEnabled | quote }}
+            - name: OTEL_SDK_DISABLED
+              value: {{ .Values.gateway.env.otelSdkDisabled | quote }}
+
+            - name: OTEL_TRACES_EXPORTER
+              value: {{ .Values.gateway.env.otelTracesExporter | quote }}
+
+            - name: OTEL_METRICS_EXPORTER
+              value: {{ .Values.gateway.env.otelMetricsExporter | quote }}
+
+            - name: OTEL_LOGS_EXPORTER
+              value: {{ .Values.gateway.env.otelLogsExporter | quote }}
+
+            - name: MANAGEMENT_TRACING_ENABLED
+              value: {{ .Values.gateway.env.managementTracingEnabled | quote }}
+
+            - name: MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED
+              value: {{ .Values.gateway.env.managementOtlpMetricsExportEnabled | quote }}
+
+            - name: MANAGEMENT_OTLP_TRACING_EXPORT_ENABLED
+              value: {{ .Values.gateway.env.managementOtlpTracingExportEnabled | quote }}
+
+            - name: MANAGEMENT_TRACING_EXPORT_ENABLED
+              value: {{ .Values.gateway.env.managementTracingExportEnabled | quote }}
+
+            - name: MANAGEMENT_TRACING_EXPORT_OTLP_ENABLED
+              value: {{ .Values.gateway.env.managementTracingExportOtlpEnabled | quote }}
+
+            - name: MANAGEMENT_LOGGING_EXPORT_ENABLED
+              value: {{ .Values.gateway.env.managementLoggingExportEnabled | quote }}
+
+            - name: MANAGEMENT_LOGGING_EXPORT_OTLP_ENABLED
+              value: {{ .Values.gateway.env.managementLoggingExportOtlpEnabled | quote }}  
 
           resources:
             requests:

@@ -1,0 +1,21 @@
+redis:
+  enabled: true
+  name: redis
+  image: redis:7-alpine
+  imagePullPolicy: IfNotPresent
+  replicas: 1
+  password: atlas-redis-pass
+  service:
+    type: ClusterIP
+    port: 6379
+    targetPort: 6379
+  persistence:
+    enabled: true
+    size: 1Gi
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"  

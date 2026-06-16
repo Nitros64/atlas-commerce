@@ -1,0 +1,44 @@
+postgres:
+  enabled: true
+
+  image:
+    repository: postgres
+    tag: "16"
+    pullPolicy: IfNotPresent
+
+  defaultStorageClassName: standard
+
+  instances:
+    auth:
+      enabled: true
+      name: postgres-auth
+      secretName: postgres-auth-secret
+      database: authdb
+      username: atlas
+      password: atlas
+      replicas: 1
+      storage: 2Gi
+      resources:
+        requests:
+          cpu: "25m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
+          memory: "256Mi"
+
+    catalog:
+      enabled: true
+      name: postgres-catalog
+      secretName: postgres-catalog-secret
+      database: catalogdb
+      username: atlas
+      password: atlas
+      replicas: 1
+      storage: 2Gi
+      resources:
+        requests:
+          cpu: "25m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
+          memory: "256Mi"

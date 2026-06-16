@@ -68,6 +68,11 @@ docker-compose.override.yml
 
 
 # =========================
+# Helm
+# =========================
+platform/helm/atlas-commerce/values/secrets-local.yaml
+
+# =========================
 # Files to be ignored in the repository
 # =========================
 

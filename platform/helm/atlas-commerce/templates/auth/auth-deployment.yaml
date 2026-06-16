@@ -28,8 +28,8 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.auth.deployment.terminationGracePeriodSeconds }}
       containers:
         - name: {{ .Values.auth.labels.app }}
-          image: {{ .Values.auth.deployment.image | quote }}
-          imagePullPolicy: {{ .Values.auth.deployment.imagePullPolicy }}
+          image: "{{ .Values.auth.deployment.image.repository }}:{{ .Values.auth.deployment.image.tag }}"
+          imagePullPolicy: {{ .Values.auth.deployment.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.auth.deployment.containerPort }}
           env:
@@ -45,7 +45,7 @@ spec:
             - secretRef:
                 name: auth-secret
             - secretRef:
-                name: jwt-secret
+                name: {{ .Values.auth.jwt.secretName }}
             - secretRef:
                 name: redis-secret
           

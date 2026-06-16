@@ -1,0 +1,13 @@
+{{- if .Values.catalog.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-catalog
+  namespace: {{ .Release.Namespace }}
+data:
+  SPRING_PROFILES_ACTIVE: "docker"
+  SPRING_DATASOURCE_URL: {{ .Values.catalog.datasource.url | quote }}
+  SPRING_DATASOURCE_DRIVER_CLASS_NAME: {{ .Values.catalog.datasource.driverClassName | quote }}
+  SPRING_DATA_REDIS_HOST: {{ .Values.catalog.redis.host | quote }}
+  SPRING_DATA_REDIS_PORT: {{ .Values.catalog.redis.port | quote }}
+{{- end }}

@@ -1,0 +1,20 @@
+{{- if .Values.postgres.enabled }}
+{{- range $key, $db := .Values.postgres.instances }}
+{{- if $db.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $db.name }}-headless
+  namespace: {{ $.Release.Namespace }}
+spec:
+  clusterIP: None
+  selector:
+    app: {{ $db.name }}
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+{{- end }}
+{{- end }}
+{{- end }}

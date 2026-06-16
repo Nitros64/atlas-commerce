@@ -1,0 +1,27 @@
+{{- if .Values.kafka.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.kafka.brokerConfigMapName }}
+  namespace: {{ .Release.Namespace }}
+data:
+  KAFKA_NODE_ID: {{ .Values.kafka.brokerConfig.nodeId | quote }}
+  KAFKA_PROCESS_ROLES: {{ .Values.kafka.brokerConfig.processRoles | quote }}
+  KAFKA_CONTROLLER_QUORUM_VOTERS: {{ .Values.kafka.brokerConfig.controllerQuorumVoters | quote }}
+  KAFKA_LISTENERS: {{ .Values.kafka.brokerConfig.listeners | quote }}
+  KAFKA_ADVERTISED_LISTENERS: {{ .Values.kafka.brokerConfig.advertisedListeners | quote }}
+  KAFKA_CONTROLLER_LISTENER_NAMES: {{ .Values.kafka.brokerConfig.controllerListenerNames | quote }}
+  KAFKA_INTER_BROKER_LISTENER_NAME: {{ .Values.kafka.brokerConfig.interBrokerListenerName | quote }}
+  KAFKA_LOG_DIRS: {{ .Values.kafka.brokerConfig.logDirs | quote }}
+  
+  KAFKA_HEAP_OPTS: {{ .Values.kafka.brokerConfig.heapOpts | quote }}
+  KAFKA_AUTO_CREATE_TOPICS_ENABLE: {{ .Values.kafka.brokerConfig.autoCreateTopicsEnable | quote }}
+  KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: {{ .Values.kafka.brokerConfig.groupInitialRebalanceDelayMs | quote }}
+  KAFKA_LOG_RETENTION_HOURS: {{ .Values.kafka.brokerConfig.logRetentionHours | quote }}
+  KAFKA_NUM_PARTITIONS: {{ .Values.kafka.brokerConfig.numPartitions | quote }}
+  KAFKA_DEFAULT_REPLICATION_FACTOR: {{ .Values.kafka.brokerConfig.defaultReplicationFactor | quote }}
+  KAFKA_MIN_INSYNC_REPLICAS: {{ .Values.kafka.brokerConfig.minInsyncReplicas | quote }}
+  KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: {{ .Values.kafka.brokerConfig.offsetsTopicReplicationFactor | quote }}
+  KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: {{ .Values.kafka.brokerConfig.transactionStateLogReplicationFactor | quote }}
+  KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: {{ .Values.kafka.brokerConfig.transactionStateLogMinIsr | quote }}
+{{- end }}
