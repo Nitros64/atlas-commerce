@@ -1,0 +1,88 @@
+{{- if .Values.gateway.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.gateway.deployment.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.gateway.labels.app }}
+spec:
+  replicas: {{ .Values.gateway.deployment.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.gateway.labels.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.gateway.labels.app }}
+        tier: {{ .Values.gateway.labels.tier }}
+        version: {{ .Values.gateway.labels.version }}
+    spec:
+      containers:
+        - name: {{ .Values.gateway.labels.app }}
+          image: {{ .Values.gateway.deployment.image | quote }}
+          imagePullPolicy: {{ .Values.gateway.deployment.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.gateway.deployment.containerPort }}
+
+          envFrom:
+            - secretRef:
+                name: {{ .Values.gateway.env.jwtSecretName }}
+
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.gateway.javaToolOptions | quote }}
+
+            - name: SPRING_PROFILES_ACTIVE
+              value: {{ .Values.gateway.env.springProfilesActive | quote }}
+
+            - name: SPRING_DATA_REDIS_HOST
+              value: {{ .Values.gateway.env.redisHost | quote }}
+
+            - name: SPRING_DATA_REDIS_PORT
+              value: {{ .Values.gateway.env.redisPort | quote }}
+
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.gateway.env.redisSecretName }}
+                  key: REDIS_PASSWORD
+
+            - name: MANAGEMENT_HEALTH_REDIS_ENABLED
+              value: {{ .Values.gateway.env.managementHealthRedisEnabled | quote }}
+
+          resources:
+            requests:
+              memory: {{ .Values.gateway.resources.requests.memory | quote }}
+              cpu: {{ .Values.gateway.resources.requests.cpu | quote }}
+            limits:
+              memory: {{ .Values.gateway.resources.limits.memory | quote }}
+              cpu: {{ .Values.gateway.resources.limits.cpu | quote }}
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.gateway.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.gateway.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.gateway.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.gateway.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.gateway.probes.startup.failureThreshold }}
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: {{ .Values.gateway.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.gateway.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.gateway.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.gateway.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.gateway.probes.liveness.failureThreshold }}
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ .Values.gateway.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.gateway.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.gateway.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.gateway.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.gateway.probes.readiness.failureThreshold }}
+{{- end }}

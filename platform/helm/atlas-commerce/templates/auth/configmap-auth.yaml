@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-auth
+  namespace: {{ .Release.Namespace }}
+data:
+  SPRING_PROFILES_ACTIVE: "docker"
+  SECURITY_JWT_EXPIRATION_MS: {{ .Values.auth.jwt.expirationMs | quote }}
+  SECURITY_JWT_REFRESH_EXPIRATION_MS: {{ .Values.auth.jwt.refreshExpirationMs | quote }}
+  SECURITY_SESSION_MAX_ACTIVE: {{ .Values.auth.security.sessionMaxActive | quote }}
+  SECURITY_RATE_LIMIT_LOGIN_MAX_ATTEMPTS: {{ .Values.auth.security.loginMaxAttempts | quote }}
+  SECURITY_RATE_LIMIT_LOGIN_WINDOW_SECONDS: {{ .Values.auth.security.loginWindowSeconds | quote }}
+  SERVER_FORWARD_HEADERS_STRATEGY: {{ .Values.auth.server.forwardHeadersStrategy | quote }}

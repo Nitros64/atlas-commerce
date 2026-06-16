@@ -1,0 +1,19 @@
+{{- if .Values.auth.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.auth.service.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.auth.labels.app }}
+    tier: {{ .Values.auth.labels.tier }}
+spec:
+  selector:
+    app: {{ .Values.auth.labels.app }}
+  ports:
+    - name: http
+      port: {{ .Values.auth.service.port }}
+      targetPort: {{ .Values.auth.service.targetPort }}
+      protocol: TCP
+  type: {{ .Values.auth.service.type }}
+{{- end }}

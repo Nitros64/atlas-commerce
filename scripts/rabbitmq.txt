@@ -1,0 +1,7 @@
+docker run -d \
+  --name atlas-rabbitmq \
+  -p 5672:5672 \
+  -p 15672:15672 \
+  -e RABBITMQ_DEFAULT_USER=atlas \
+  -e RABBITMQ_DEFAULT_PASS=atlas \
+  rabbitmq:4-management

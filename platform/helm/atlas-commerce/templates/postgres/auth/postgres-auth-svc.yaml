@@ -1,0 +1,14 @@
+{{- if .Values.postgres.auth.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-auth
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app: postgres-auth
+  ports:
+    - name: postgres
+      port: {{ .Values.postgres.auth.service.port }}
+      targetPort: {{ .Values.postgres.auth.service.targetPort }}
+{{- end }}

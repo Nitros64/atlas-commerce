@@ -1,0 +1,95 @@
+{{- if .Values.auth.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.auth.deployment.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.auth.labels.app }}
+    tier: {{ .Values.auth.labels.tier }}
+    version: {{ .Values.auth.labels.version }}
+spec:
+  replicas: {{ .Values.auth.deployment.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.auth.labels.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.auth.labels.app }}
+        tier: {{ .Values.auth.labels.tier }}
+        version: {{ .Values.auth.labels.version }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.auth.deployment.terminationGracePeriodSeconds }}
+      containers:
+        - name: {{ .Values.auth.labels.app }}
+          image: {{ .Values.auth.deployment.image | quote }}
+          imagePullPolicy: {{ .Values.auth.deployment.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.auth.deployment.containerPort }}
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.auth.javaToolOptions | quote }}
+          envFrom:
+            - configMapRef:
+                name: cm-auth-spring-datasource
+            - configMapRef:
+                name: cm-redis
+            - configMapRef:
+                name: cm-auth
+            - secretRef:
+                name: auth-secret
+            - secretRef:
+                name: jwt-secret
+            - secretRef:
+                name: redis-secret
+          
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+          
+          resources:
+            requests:
+              cpu: {{ .Values.auth.resources.requests.cpu | quote }}
+              memory: {{ .Values.auth.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.auth.resources.limits.cpu | quote }}
+              memory: {{ .Values.auth.resources.limits.memory | quote }}
+          
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.auth.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.auth.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.auth.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.auth.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.auth.probes.startup.failureThreshold }}
+          
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: {{ .Values.auth.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.auth.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.auth.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.auth.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.auth.probes.liveness.failureThreshold }}
+          
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ .Values.auth.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.auth.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.auth.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.auth.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.auth.probes.readiness.failureThreshold }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 10"]
+{{- end }}
