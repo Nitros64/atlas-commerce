@@ -1,26 +1,26 @@
-payment:
+audit:
   enabled: true
 
   deployment:
-    name: payment
+    name: audit
     replicas: 1
     image:
-      repository: nitros64/payment-service
-      tag: "1.0.10"
+      repository: nitros64/audit-service
+      tag: "1.0.3"
       pullPolicy: Always
-    containerPort: 8088
+    containerPort: 8093
     terminationGracePeriodSeconds: 30
 
   labels:
-    app: payment
+    app: audit
     tier: backend
     version: v1
 
   service:
-    name: payment-service
+    name: audit-service
     type: ClusterIP
     port: 80
-    targetPort: 8088
+    targetPort: 8093
 
   javaToolOptions: >-
     -XX:+UseContainerSupport
@@ -32,7 +32,7 @@ payment:
     -XX:+ExitOnOutOfMemoryError
 
   datasource:
-    url: jdbc:postgresql://postgres-payment:5432/paymentdb
+    url: jdbc:postgresql://postgres-audit:5432/auditdb
     driverClassName: org.postgresql.Driver
     ddlAuto: validate
 
@@ -42,6 +42,13 @@ payment:
     healthRedisEnabled: "false"
     healthRabbitEnabled: "false"
     healthKafkaEnabled: "false"
+    tracingEnabled: "false"
+    otlpMetricsExportEnabled: "false"
+    otlpTracingExportEnabled: "false"
+    tracingExportEnabled: "false"
+    tracingExportOtlpEnabled: "false"
+    loggingExportEnabled: "false"
+    loggingExportOtlpEnabled: "false"
 
   otel:
     sdkDisabled: "true"
@@ -59,15 +66,15 @@ payment:
 
   probes:
     startup:
-      initialDelaySeconds: 30
+      initialDelaySeconds: 10
       periodSeconds: 10
-      timeoutSeconds: 10
-      failureThreshold: 45
+      timeoutSeconds: 3
+      failureThreshold: 30
     liveness:
-      initialDelaySeconds: 180
-      periodSeconds: 30
-      timeoutSeconds: 10
-      failureThreshold: 5
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 3
+      failureThreshold: 3
     readiness:
       initialDelaySeconds: 15
       periodSeconds: 10
@@ -78,5 +85,14 @@ payment:
     enabled: true
     allowedIngressApps:
       - gateway
+      - auth
+      - catalog
+      - cart
+      - pricing
+      - coupon
+      - inventory
+      - payment
       - order
+      - shipping
+      - notification
       - prometheus

@@ -18,11 +18,13 @@ $ValuesFiles = @(
     "$ChartDir/values/order.yaml",
     "$ChartDir/values/shipping.yaml",
     "$ChartDir/values/notification.yaml",
+    "$ChartDir/values/audit.yaml",
     "$ChartDir/values/gateway.yaml",
     "$ChartDir/values/kafka.yaml",
     "$ChartDir/values/postgres.yaml",
-    "$ChartDir/values/redis.yaml",
-    "$ChartDir/values/secrets-local.yaml"
+    "$ChartDir/values/redis.yaml",    
+    "$ChartDir/values/secrets-local.yaml",
+    "$ChartDir/values/local-lite.yaml"
 )
 
 Write-Host "Upgrading Helm release..."

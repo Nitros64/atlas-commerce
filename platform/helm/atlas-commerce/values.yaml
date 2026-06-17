@@ -39,3 +39,6 @@ shipping:
 
 notification:
   enabled: false  
+
+audit:
+  enabled: false

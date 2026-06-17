@@ -1,0 +1,101 @@
+{{- if .Values.audit.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.audit.deployment.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.audit.labels.app }}
+spec:
+  replicas: {{ .Values.audit.deployment.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
+  selector:
+    matchLabels:
+      app: {{ .Values.audit.labels.app }}
+  template:
+    metadata:
+      annotations:
+        checksum/config-audit: {{ include (print $.Template.BasePath "/audit/cm-audit.yaml") . | sha256sum }}
+      labels:
+        app: {{ .Values.audit.labels.app }}
+        tier: {{ .Values.audit.labels.tier }}
+        version: {{ .Values.audit.labels.version }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.audit.deployment.terminationGracePeriodSeconds }}
+      containers:
+        - name: {{ .Values.audit.labels.app }}
+          image: "{{ .Values.audit.deployment.image.repository }}:{{ .Values.audit.deployment.image.tag }}"
+          imagePullPolicy: {{ .Values.audit.deployment.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.audit.deployment.containerPort }}
+              name: http
+
+          envFrom:
+            - configMapRef:
+                name: cm-audit
+            - configMapRef:
+                name: cm-kafka
+            - secretRef:
+                name: {{ .Values.secrets.jwt.name }}
+
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.audit.javaToolOptions | quote }}
+
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.instances.audit.secretName }}
+                  key: POSTGRES_PASSWORD
+
+            - name: OTEL_SDK_DISABLED
+              value: {{ .Values.audit.otel.sdkDisabled | quote }}
+
+            - name: OTEL_TRACES_EXPORTER
+              value: {{ .Values.audit.otel.tracesExporter | quote }}
+
+            - name: OTEL_METRICS_EXPORTER
+              value: {{ .Values.audit.otel.metricsExporter | quote }}
+
+            - name: OTEL_LOGS_EXPORTER
+              value: {{ .Values.audit.otel.logsExporter | quote }}
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.audit.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.audit.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.audit.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.audit.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.audit.probes.startup.failureThreshold }}
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: {{ .Values.audit.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.audit.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.audit.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.audit.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.audit.probes.liveness.failureThreshold }}
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ .Values.audit.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.audit.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.audit.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.audit.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.audit.probes.readiness.failureThreshold }}
+
+          resources:
+            requests:
+              cpu: {{ .Values.audit.resources.requests.cpu | quote }}
+              memory: {{ .Values.audit.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.audit.resources.limits.cpu | quote }}
+              memory: {{ .Values.audit.resources.limits.memory | quote }}
+{{- end }}

@@ -24,9 +24,12 @@ notification:
 
   javaToolOptions: >-
     -XX:+UseContainerSupport
-    -XX:MaxRAMPercentage=35.0
-    -XX:InitialRAMPercentage=8.0
-    -XX:MaxMetaspaceSize=128m
+    -XX:MaxRAMPercentage=25.0
+    -XX:InitialRAMPercentage=6.0
+    -XX:MaxMetaspaceSize=192m
+    -XX:ReservedCodeCacheSize=64m
+    -Xss512k
+    -XX:+ExitOnOutOfMemoryError
 
   datasource:
     url: jdbc:postgresql://postgres-notification:5432/notificationdb
@@ -56,10 +59,10 @@ notification:
   resources:
     requests:
       cpu: "100m"
-      memory: "256Mi"
+      memory: "512Mi"
     limits:
       cpu: "700m"
-      memory: "1Gi"
+      memory: "2Gi"
 
   probes:
     startup:

@@ -1,0 +1,11 @@
+payment:
+  deployment:
+    replicas: 0
+
+shipping:
+  deployment:
+    replicas: 0
+
+audit:
+  deployment:
+    replicas: 0

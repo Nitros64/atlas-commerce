@@ -1,0 +1,52 @@
+{{- if and .Values.audit.enabled .Values.audit.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: audit-service-netpol
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ .Values.audit.labels.app }}
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    - from:
+{{- range .Values.audit.networkPolicy.allowedIngressApps }}
+        - podSelector:
+            matchLabels:
+              app: {{ . }}
+{{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.audit.deployment.containerPort }}
+
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: {{ .Values.postgres.instances.audit.name }}
+      ports:
+        - protocol: TCP
+          port: 5432
+
+    - to:
+        - podSelector:
+            matchLabels:
+              app: kafka
+      ports:
+        - protocol: TCP
+          port: 9092
+
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+{{- end }}

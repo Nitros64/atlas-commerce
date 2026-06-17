@@ -24,9 +24,12 @@ inventory:
 
   javaToolOptions: >-
     -XX:+UseContainerSupport
-    -XX:MaxRAMPercentage=35.0
-    -XX:InitialRAMPercentage=8.0
-    -XX:MaxMetaspaceSize=128m
+    -XX:MaxRAMPercentage=25.0
+    -XX:InitialRAMPercentage=6.0
+    -XX:MaxMetaspaceSize=192m
+    -XX:ReservedCodeCacheSize=64m
+    -Xss512k
+    -XX:+ExitOnOutOfMemoryError
 
   datasource:
     url: jdbc:postgresql://postgres-inventory:5432/inventorydb
@@ -49,10 +52,10 @@ inventory:
   resources:
     requests:
       cpu: "100m"
-      memory: "256Mi"
-    limits:
-      cpu: "500m"
       memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
 
   probes:
     startup:
