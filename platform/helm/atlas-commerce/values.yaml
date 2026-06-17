@@ -21,3 +21,6 @@ cart:
 
 pricing:
   enabled: false
+
+coupon:
+  enabled: false  

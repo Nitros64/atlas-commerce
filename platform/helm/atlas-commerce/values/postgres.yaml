@@ -68,4 +68,24 @@ postgres:
           memory: "512Mi"    
       allowedApps:
         - cart
-        - postgres-backup     
+        - postgres-backup  
+    
+    coupon:
+      enabled: true
+      name: postgres-coupon
+      secretName: postgres-coupon-secret
+      database: coupondb
+      username: coupon
+      password: coupon123
+      replicas: 1
+      storage: 2Gi
+      allowedApps:
+        - coupon
+        - postgres-backup
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
+        limits:
+          cpu: "500m"
+          memory: "512Mi"    

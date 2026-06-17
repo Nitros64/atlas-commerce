@@ -1,0 +1,17 @@
+{{- if .Values.coupon.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.coupon.service.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.coupon.labels.app }}
+spec:
+  type: {{ .Values.coupon.service.type }}
+  selector:
+    app: {{ .Values.coupon.labels.app }}
+  ports:
+    - name: http
+      port: {{ .Values.coupon.service.port }}
+      targetPort: {{ .Values.coupon.service.targetPort }}
+{{- end }}
