@@ -148,4 +148,24 @@ postgres:
           memory: "128Mi"
         limits:
           cpu: "200m"
+          memory: "256Mi"     
+    
+    shipping:
+      enabled: true
+      name: postgres-shipping
+      secretName: postgres-shipping-secret
+      database: shippingdb
+      username: shipping
+      password: shipping123
+      replicas: 1
+      storage: 2Gi
+      allowedApps:
+        - shipping
+        - postgres-backup
+      resources:
+        requests:
+          cpu: "25m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
           memory: "256Mi"      

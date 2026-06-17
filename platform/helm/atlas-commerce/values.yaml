@@ -33,3 +33,6 @@ payment:
 
 order:
   enabled: false  
+
+shipping:
+  enabled: false  

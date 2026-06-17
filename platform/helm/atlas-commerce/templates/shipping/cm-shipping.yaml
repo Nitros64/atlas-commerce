@@ -1,0 +1,28 @@
+{{- if .Values.shipping.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-shipping
+  namespace: {{ .Release.Namespace }}
+data:
+  SPRING_PROFILES_ACTIVE: "docker"
+  SERVER_PORT: {{ .Values.shipping.deployment.containerPort | quote }}
+  SPRING_DATASOURCE_URL: {{ .Values.shipping.datasource.url | quote }}
+  SPRING_DATASOURCE_USERNAME: {{ .Values.postgres.instances.shipping.username | quote }}
+  SPRING_DATASOURCE_DRIVER_CLASS_NAME: {{ .Values.shipping.datasource.driverClassName | quote }}
+  SPRING_JPA_HIBERNATE_DDL_AUTO: {{ .Values.shipping.datasource.ddlAuto | quote }}
+
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: {{ .Values.shipping.management.healthProbesEnabled | quote }}
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: {{ .Values.shipping.management.healthShowDetails | quote }}
+  MANAGEMENT_HEALTH_REDIS_ENABLED: {{ .Values.shipping.management.healthRedisEnabled | quote }}
+  MANAGEMENT_HEALTH_RABBIT_ENABLED: {{ .Values.shipping.management.healthRabbitEnabled | quote }}
+  MANAGEMENT_HEALTH_KAFKA_ENABLED: {{ .Values.shipping.management.healthKafkaEnabled | quote }}
+
+  MANAGEMENT_TRACING_ENABLED: {{ .Values.shipping.management.tracingEnabled | quote }}
+  MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED: {{ .Values.shipping.management.otlpMetricsExportEnabled | quote }}
+  MANAGEMENT_OTLP_TRACING_EXPORT_ENABLED: {{ .Values.shipping.management.otlpTracingExportEnabled | quote }}
+  MANAGEMENT_TRACING_EXPORT_ENABLED: {{ .Values.shipping.management.tracingExportEnabled | quote }}
+  MANAGEMENT_TRACING_EXPORT_OTLP_ENABLED: {{ .Values.shipping.management.tracingExportOtlpEnabled | quote }}
+  MANAGEMENT_LOGGING_EXPORT_ENABLED: {{ .Values.shipping.management.loggingExportEnabled | quote }}
+  MANAGEMENT_LOGGING_EXPORT_OTLP_ENABLED: {{ .Values.shipping.management.loggingExportOtlpEnabled | quote }}
+{{- end }}

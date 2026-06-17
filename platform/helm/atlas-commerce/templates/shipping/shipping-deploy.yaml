@@ -1,0 +1,101 @@
+{{- if .Values.shipping.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.shipping.deployment.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.shipping.labels.app }}
+spec:
+  replicas: {{ .Values.shipping.deployment.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.shipping.labels.app }}
+  template:
+    metadata:
+      annotations:
+        checksum/config-shipping: {{ include (print $.Template.BasePath "/shipping/cm-shipping.yaml") . | sha256sum }}
+      labels:
+        app: {{ .Values.shipping.labels.app }}
+        tier: {{ .Values.shipping.labels.tier }}
+        version: {{ .Values.shipping.labels.version }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.shipping.deployment.terminationGracePeriodSeconds }}
+      containers:
+        - name: {{ .Values.shipping.labels.app }}
+          image: "{{ .Values.shipping.deployment.image.repository }}:{{ .Values.shipping.deployment.image.tag }}"
+          imagePullPolicy: {{ .Values.shipping.deployment.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.shipping.deployment.containerPort }}
+              name: http
+
+          envFrom:
+            - configMapRef:
+                name: cm-shipping
+            - configMapRef:
+                name: cm-kafka
+            - secretRef:
+                name: {{ .Values.secrets.jwt.name }}
+
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.shipping.javaToolOptions | quote }}
+
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.instances.shipping.secretName }}
+                  key: POSTGRES_PASSWORD
+
+            - name: OTEL_SDK_DISABLED
+              value: {{ .Values.shipping.otel.sdkDisabled | quote }}
+
+            - name: OTEL_TRACES_EXPORTER
+              value: {{ .Values.shipping.otel.tracesExporter | quote }}
+
+            - name: OTEL_METRICS_EXPORTER
+              value: {{ .Values.shipping.otel.metricsExporter | quote }}
+
+            - name: OTEL_LOGS_EXPORTER
+              value: {{ .Values.shipping.otel.logsExporter | quote }}
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.shipping.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.shipping.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.shipping.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.shipping.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.shipping.probes.startup.failureThreshold }}
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: {{ .Values.shipping.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.shipping.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.shipping.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.shipping.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.shipping.probes.liveness.failureThreshold }}
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ .Values.shipping.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.shipping.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.shipping.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.shipping.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.shipping.probes.readiness.failureThreshold }}
+
+          resources:
+            requests:
+              cpu: {{ .Values.shipping.resources.requests.cpu | quote }}
+              memory: {{ .Values.shipping.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.shipping.resources.limits.cpu | quote }}
+              memory: {{ .Values.shipping.resources.limits.memory | quote }}
+{{- end }}
