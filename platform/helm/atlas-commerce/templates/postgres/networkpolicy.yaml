@@ -1,0 +1,28 @@
+{{- if .Values.postgres.networkPolicy.enabled }}
+{{- range $key, $db := .Values.postgres.instances }}
+{{- if $db.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $db.name }}-netpol
+  namespace: {{ $.Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ $db.name }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+{{- range $db.allowedApps }}
+        - podSelector:
+            matchLabels:
+              app: {{ . }}
+{{- end }}
+      ports:
+        - protocol: TCP
+          port: 5432
+{{- end }}
+{{- end }}
+{{- end }}

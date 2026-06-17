@@ -12,6 +12,7 @@ CHART_DIR="$PROJECT_ROOT/platform/helm/atlas-commerce"
 VALUES_FILES=(
   "$CHART_DIR/values/auth.yaml"
   "$CHART_DIR/values/catalog.yaml"
+  "$CHART_DIR/values/cart.yaml"
   "$CHART_DIR/values/gateway.yaml"
   "$CHART_DIR/values/kafka.yaml"
   "$CHART_DIR/values/postgres.yaml"
