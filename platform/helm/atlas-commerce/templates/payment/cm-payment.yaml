@@ -1,0 +1,19 @@
+{{- if .Values.payment.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-payment
+  namespace: {{ .Release.Namespace }}
+data:
+  SPRING_PROFILES_ACTIVE: "docker"
+  SERVER_PORT: {{ .Values.payment.deployment.containerPort | quote }}
+  SPRING_DATASOURCE_URL: {{ .Values.payment.datasource.url | quote }}
+  SPRING_DATASOURCE_USERNAME: {{ .Values.postgres.instances.payment.username | quote }}
+  SPRING_DATASOURCE_DRIVER_CLASS_NAME: {{ .Values.payment.datasource.driverClassName | quote }}
+  SPRING_JPA_HIBERNATE_DDL_AUTO: {{ .Values.payment.datasource.ddlAuto | quote }}
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: {{ .Values.payment.management.healthProbesEnabled | quote }}
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: {{ .Values.payment.management.healthShowDetails | quote }}
+  MANAGEMENT_HEALTH_REDIS_ENABLED: {{ .Values.payment.management.healthRedisEnabled | quote }}
+  MANAGEMENT_HEALTH_RABBIT_ENABLED: {{ .Values.payment.management.healthRabbitEnabled | quote }}
+  MANAGEMENT_HEALTH_KAFKA_ENABLED: {{ .Values.payment.management.healthKafkaEnabled | quote }}
+{{- end }}

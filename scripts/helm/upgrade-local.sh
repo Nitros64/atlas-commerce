@@ -16,6 +16,7 @@ VALUES_FILES=(
   "$CHART_DIR/values/pricing.yaml"
   "$CHART_DIR/values/coupon.yaml"
   "$CHART_DIR/values/inventory.yaml"
+  "$CHART_DIR/values/payment.yaml"
   "$CHART_DIR/values/gateway.yaml"
   "$CHART_DIR/values/kafka.yaml"
   "$CHART_DIR/values/postgres.yaml"

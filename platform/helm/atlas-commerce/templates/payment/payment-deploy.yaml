@@ -1,0 +1,97 @@
+{{- if .Values.payment.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.payment.deployment.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.payment.labels.app }}
+spec:
+  replicas: {{ .Values.payment.deployment.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.payment.labels.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.payment.labels.app }}
+        tier: {{ .Values.payment.labels.tier }}
+        version: {{ .Values.payment.labels.version }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.payment.deployment.terminationGracePeriodSeconds }}
+      containers:
+        - name: {{ .Values.payment.labels.app }}
+          image: "{{ .Values.payment.deployment.image.repository }}:{{ .Values.payment.deployment.image.tag }}"
+          imagePullPolicy: {{ .Values.payment.deployment.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.payment.deployment.containerPort }}
+              name: http
+
+          envFrom:
+            - configMapRef:
+                name: cm-payment
+            - secretRef:
+                name: {{ .Values.secrets.jwt.name }}
+
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.payment.javaToolOptions | quote }}
+
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.instances.payment.secretName }}
+                  key: POSTGRES_PASSWORD
+
+            - name: OTEL_SDK_DISABLED
+              value: {{ .Values.payment.otel.sdkDisabled | quote }}
+
+            - name: OTEL_TRACES_EXPORTER
+              value: {{ .Values.payment.otel.tracesExporter | quote }}
+
+            - name: OTEL_METRICS_EXPORTER
+              value: {{ .Values.payment.otel.metricsExporter | quote }}
+
+            - name: OTEL_LOGS_EXPORTER
+              value: {{ .Values.payment.otel.logsExporter | quote }}
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.payment.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.payment.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.payment.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.payment.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.payment.probes.startup.failureThreshold }}
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: {{ .Values.payment.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.payment.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.payment.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.payment.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.payment.probes.liveness.failureThreshold }}
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ .Values.payment.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.payment.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.payment.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.payment.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.payment.probes.readiness.failureThreshold }}
+
+          resources:
+            requests:
+              cpu: {{ .Values.payment.resources.requests.cpu | quote }}
+              memory: {{ .Values.payment.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.payment.resources.limits.cpu | quote }}
+              memory: {{ .Values.payment.resources.limits.memory | quote }}
+{{- end }}

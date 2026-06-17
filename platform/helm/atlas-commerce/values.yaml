@@ -27,3 +27,6 @@ coupon:
 
 inventory:
   enabled: false  
+
+payment:
+  enabled: false  

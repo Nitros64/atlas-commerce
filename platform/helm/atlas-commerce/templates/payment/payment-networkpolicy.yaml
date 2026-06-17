@@ -1,0 +1,52 @@
+{{- if and .Values.payment.enabled .Values.payment.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: payment-service-netpol
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ .Values.payment.labels.app }}
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    - from:
+{{- range .Values.payment.networkPolicy.allowedIngressApps }}
+        - podSelector:
+            matchLabels:
+              app: {{ . }}
+{{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.payment.deployment.containerPort }}
+
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: {{ .Values.postgres.instances.payment.name }}
+      ports:
+        - protocol: TCP
+          port: 5432
+
+    - to:
+        - podSelector:
+            matchLabels:
+              app: kafka
+      ports:
+        - protocol: TCP
+          port: 9092
+
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+{{- end }}

@@ -109,3 +109,23 @@ postgres:
         limits:
           cpu: "500m"
           memory: "512Mi"      
+    
+    payment:
+      enabled: true
+      name: postgres-payment
+      secretName: postgres-payment-secret
+      database: paymentdb
+      username: payment
+      password: payment123
+      replicas: 1
+      storage: 2Gi
+      allowedApps:
+        - payment
+        - postgres-backup
+      resources:
+        requests:
+          cpu: "25m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
+          memory: "256Mi"     
