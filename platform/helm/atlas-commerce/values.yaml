@@ -42,3 +42,11 @@ notification:
 
 audit:
   enabled: false
+
+ingress:
+  enabled: false
+  className: nginx
+  host: atlas.local
+  gatewayServiceName: gateway-service
+  gatewayServicePort: 80
+  annotations: {} 

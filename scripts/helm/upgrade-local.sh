@@ -25,6 +25,7 @@ VALUES_FILES=(
   "$CHART_DIR/values/kafka.yaml"
   "$CHART_DIR/values/postgres.yaml"
   "$CHART_DIR/values/redis.yaml"
+  "$CHART_DIR/values/ingress.yaml"
   "$CHART_DIR/values/secrets-local.yaml"
   "$CHART_DIR/values/local-lite.yaml"
 )

@@ -23,6 +23,7 @@ $ValuesFiles = @(
     "$ChartDir/values/kafka.yaml",
     "$ChartDir/values/postgres.yaml",
     "$ChartDir/values/redis.yaml",    
+    "$ChartDir/values/ingress.yaml",
     "$ChartDir/values/secrets-local.yaml",
     "$ChartDir/values/local-lite.yaml"
 )
