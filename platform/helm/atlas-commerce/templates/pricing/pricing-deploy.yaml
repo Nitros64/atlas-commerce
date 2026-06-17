@@ -1,0 +1,79 @@
+{{- if .Values.pricing.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.pricing.deployment.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.pricing.labels.app }}
+spec:
+  replicas: {{ .Values.pricing.deployment.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.pricing.labels.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.pricing.labels.app }}
+        tier: {{ .Values.pricing.labels.tier }}
+        version: {{ .Values.pricing.labels.version }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.pricing.deployment.terminationGracePeriodSeconds }}
+      containers:
+        - name: {{ .Values.pricing.labels.app }}
+          image: "{{ .Values.pricing.deployment.image.repository }}:{{ .Values.pricing.deployment.image.tag }}"
+          imagePullPolicy: {{ .Values.pricing.deployment.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.pricing.deployment.containerPort }}
+              name: http
+
+          envFrom:
+            - configMapRef:
+                name: cm-pricing
+            - secretRef:
+                name: {{ .Values.secrets.jwt.name }}
+
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.pricing.javaToolOptions | quote }}
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.pricing.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.pricing.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.pricing.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.pricing.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.pricing.probes.startup.failureThreshold }}
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: {{ .Values.pricing.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.pricing.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.pricing.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.pricing.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.pricing.probes.liveness.failureThreshold }}
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ .Values.pricing.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.pricing.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.pricing.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.pricing.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.pricing.probes.readiness.failureThreshold }}
+
+          resources:
+            requests:
+              cpu: {{ .Values.pricing.resources.requests.cpu | quote }}
+              memory: {{ .Values.pricing.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.pricing.resources.limits.cpu | quote }}
+              memory: {{ .Values.pricing.resources.limits.memory | quote }}
+{{- end }}

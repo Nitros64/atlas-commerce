@@ -1,0 +1,17 @@
+{{- if .Values.pricing.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.pricing.service.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.pricing.labels.app }}
+spec:
+  type: {{ .Values.pricing.service.type }}
+  selector:
+    app: {{ .Values.pricing.labels.app }}
+  ports:
+    - name: http
+      port: {{ .Values.pricing.service.port }}
+      targetPort: {{ .Values.pricing.service.targetPort }}
+{{- end }}
