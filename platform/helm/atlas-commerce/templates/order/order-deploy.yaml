@@ -18,6 +18,8 @@ spec:
       app: {{ .Values.order.labels.app }}
   template:
     metadata:
+      annotations:
+        checksum/config-order: {{ include (print $.Template.BasePath "/order/cm-order.yaml") . | sha256sum }}
       labels:
         app: {{ .Values.order.labels.app }}
         tier: {{ .Values.order.labels.tier }}
