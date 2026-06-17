@@ -88,4 +88,24 @@ postgres:
           memory: "256Mi"
         limits:
           cpu: "500m"
-          memory: "512Mi"    
+          memory: "512Mi"   
+    
+    inventory:
+      enabled: true
+      name: postgres-inventory
+      secretName: postgres-inventory-secret
+      database: inventorydb
+      username: inventory
+      password: inventory123
+      replicas: 1
+      storage: 2Gi
+      allowedApps:
+        - inventory
+        - postgres-backup
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
+        limits:
+          cpu: "500m"
+          memory: "512Mi"      

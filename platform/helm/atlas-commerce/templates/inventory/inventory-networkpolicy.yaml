@@ -1,0 +1,52 @@
+{{- if and .Values.inventory.enabled .Values.inventory.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: inventory-service-netpol
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ .Values.inventory.labels.app }}
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    - from:
+{{- range .Values.inventory.networkPolicy.allowedIngressApps }}
+        - podSelector:
+            matchLabels:
+              app: {{ . }}
+{{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.inventory.deployment.containerPort }}
+
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: {{ .Values.postgres.instances.inventory.name }}
+      ports:
+        - protocol: TCP
+          port: 5432
+
+    - to:
+        - podSelector:
+            matchLabels:
+              app: kafka
+      ports:
+        - protocol: TCP
+          port: 9092
+
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+{{- end }}

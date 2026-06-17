@@ -24,3 +24,6 @@ pricing:
 
 coupon:
   enabled: false  
+
+inventory:
+  enabled: false  
