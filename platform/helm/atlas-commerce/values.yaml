@@ -36,3 +36,6 @@ order:
 
 shipping:
   enabled: false  
+
+notification:
+  enabled: false  

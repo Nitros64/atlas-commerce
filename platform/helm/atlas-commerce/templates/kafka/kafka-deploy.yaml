@@ -8,6 +8,11 @@ metadata:
     app: {{ .Values.kafka.labels.app }}
 spec:
   replicas: {{ .Values.kafka.deployment.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
   selector:
     matchLabels:
       app: {{ .Values.kafka.labels.app }}

@@ -1,0 +1,101 @@
+{{- if .Values.notification.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.notification.deployment.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.notification.labels.app }}
+spec:
+  replicas: {{ .Values.notification.deployment.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
+  selector:
+    matchLabels:
+      app: {{ .Values.notification.labels.app }}
+  template:
+    metadata:
+      annotations:
+        checksum/config-notification: {{ include (print $.Template.BasePath "/notification/cm-notification.yaml") . | sha256sum }}
+      labels:
+        app: {{ .Values.notification.labels.app }}
+        tier: {{ .Values.notification.labels.tier }}
+        version: {{ .Values.notification.labels.version }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.notification.deployment.terminationGracePeriodSeconds }}
+      containers:
+        - name: {{ .Values.notification.labels.app }}
+          image: "{{ .Values.notification.deployment.image.repository }}:{{ .Values.notification.deployment.image.tag }}"
+          imagePullPolicy: {{ .Values.notification.deployment.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.notification.deployment.containerPort }}
+              name: http
+
+          envFrom:
+            - configMapRef:
+                name: cm-notification
+            - configMapRef:
+                name: cm-kafka
+            - secretRef:
+                name: {{ .Values.secrets.jwt.name }}
+
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.notification.javaToolOptions | quote }}
+
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.instances.notification.secretName }}
+                  key: POSTGRES_PASSWORD
+
+            - name: OTEL_SDK_DISABLED
+              value: {{ .Values.notification.otel.sdkDisabled | quote }}
+
+            - name: OTEL_TRACES_EXPORTER
+              value: {{ .Values.notification.otel.tracesExporter | quote }}
+
+            - name: OTEL_METRICS_EXPORTER
+              value: {{ .Values.notification.otel.metricsExporter | quote }}
+
+            - name: OTEL_LOGS_EXPORTER
+              value: {{ .Values.notification.otel.logsExporter | quote }}
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.notification.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.notification.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.notification.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.notification.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.notification.probes.startup.failureThreshold }}
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: {{ .Values.notification.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.notification.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.notification.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.notification.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.notification.probes.liveness.failureThreshold }}
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ .Values.notification.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.notification.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.notification.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.notification.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.notification.probes.readiness.failureThreshold }}
+
+          resources:
+            requests:
+              cpu: {{ .Values.notification.resources.requests.cpu | quote }}
+              memory: {{ .Values.notification.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.notification.resources.limits.cpu | quote }}
+              memory: {{ .Values.notification.resources.limits.memory | quote }}
+{{- end }}

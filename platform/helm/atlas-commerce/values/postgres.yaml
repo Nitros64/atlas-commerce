@@ -168,4 +168,24 @@ postgres:
           memory: "128Mi"
         limits:
           cpu: "200m"
+          memory: "256Mi"     
+
+    notification:
+      enabled: true
+      name: postgres-notification
+      secretName: postgres-notification-secret
+      database: notificationdb
+      username: notification
+      password: notification123
+      replicas: 1
+      storage: 2Gi
+      allowedApps:
+        - notification
+        - postgres-backup
+      resources:
+        requests:
+          cpu: "25m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
           memory: "256Mi"      

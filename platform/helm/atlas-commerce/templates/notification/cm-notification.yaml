@@ -1,0 +1,28 @@
+{{- if .Values.notification.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-notification
+  namespace: {{ .Release.Namespace }}
+data:
+  SPRING_PROFILES_ACTIVE: "docker"
+  SERVER_PORT: {{ .Values.notification.deployment.containerPort | quote }}
+  SPRING_DATASOURCE_URL: {{ .Values.notification.datasource.url | quote }}
+  SPRING_DATASOURCE_USERNAME: {{ .Values.postgres.instances.notification.username | quote }}
+  SPRING_DATASOURCE_DRIVER_CLASS_NAME: {{ .Values.notification.datasource.driverClassName | quote }}
+  SPRING_JPA_HIBERNATE_DDL_AUTO: {{ .Values.notification.datasource.ddlAuto | quote }}
+
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: {{ .Values.notification.management.healthProbesEnabled | quote }}
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: {{ .Values.notification.management.healthShowDetails | quote }}
+  MANAGEMENT_HEALTH_REDIS_ENABLED: {{ .Values.notification.management.healthRedisEnabled | quote }}
+  MANAGEMENT_HEALTH_RABBIT_ENABLED: {{ .Values.notification.management.healthRabbitEnabled | quote }}
+  MANAGEMENT_HEALTH_KAFKA_ENABLED: {{ .Values.notification.management.healthKafkaEnabled | quote }}
+
+  MANAGEMENT_TRACING_ENABLED: {{ .Values.notification.management.tracingEnabled | quote }}
+  MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED: {{ .Values.notification.management.otlpMetricsExportEnabled | quote }}
+  MANAGEMENT_OTLP_TRACING_EXPORT_ENABLED: {{ .Values.notification.management.otlpTracingExportEnabled | quote }}
+  MANAGEMENT_TRACING_EXPORT_ENABLED: {{ .Values.notification.management.tracingExportEnabled | quote }}
+  MANAGEMENT_TRACING_EXPORT_OTLP_ENABLED: {{ .Values.notification.management.tracingExportOtlpEnabled | quote }}
+  MANAGEMENT_LOGGING_EXPORT_ENABLED: {{ .Values.notification.management.loggingExportEnabled | quote }}
+  MANAGEMENT_LOGGING_EXPORT_OTLP_ENABLED: {{ .Values.notification.management.loggingExportOtlpEnabled | quote }}
+{{- end }}

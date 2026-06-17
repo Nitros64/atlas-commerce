@@ -8,6 +8,11 @@ metadata:
     app: {{ .Values.catalog.labels.app }}
 spec:
   replicas: {{ .Values.catalog.deployment.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
   selector:
     matchLabels:
       app: {{ .Values.catalog.labels.app }}
