@@ -30,3 +30,6 @@ inventory:
 
 payment:
   enabled: false  
+
+order:
+  enabled: false  

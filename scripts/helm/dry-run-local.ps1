@@ -15,6 +15,7 @@ $ValuesFiles = @(
     "$ChartDir/values/coupon.yaml",
     "$ChartDir/values/inventory.yaml",
     "$ChartDir/values/payment.yaml",
+    "$ChartDir/values/order.yaml",
     "$ChartDir/values/gateway.yaml",
     "$ChartDir/values/kafka.yaml",
     "$ChartDir/values/postgres.yaml",
