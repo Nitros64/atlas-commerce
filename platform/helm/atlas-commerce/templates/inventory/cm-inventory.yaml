@@ -1,0 +1,19 @@
+{{- if .Values.inventory.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-inventory
+  namespace: {{ .Release.Namespace }}
+data:
+  SPRING_PROFILES_ACTIVE: "docker"
+  SERVER_PORT: {{ .Values.inventory.deployment.containerPort | quote }}
+  SPRING_DATASOURCE_URL: {{ .Values.inventory.datasource.url | quote }}
+  SPRING_DATASOURCE_USERNAME: {{ .Values.postgres.instances.inventory.username | quote }}
+  SPRING_DATASOURCE_DRIVER_CLASS_NAME: {{ .Values.inventory.datasource.driverClassName | quote }}
+  SPRING_JPA_HIBERNATE_DDL_AUTO: {{ .Values.inventory.datasource.ddlAuto | quote }}
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: {{ .Values.inventory.management.healthProbesEnabled | quote }}
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: {{ .Values.inventory.management.healthShowDetails | quote }}
+  MANAGEMENT_HEALTH_REDIS_ENABLED: {{ .Values.inventory.management.healthRedisEnabled | quote }}
+  MANAGEMENT_HEALTH_RABBIT_ENABLED: {{ .Values.inventory.management.healthRabbitEnabled | quote }}
+  MANAGEMENT_HEALTH_KAFKA_ENABLED: {{ .Values.inventory.management.healthKafkaEnabled | quote }}
+{{- end }}

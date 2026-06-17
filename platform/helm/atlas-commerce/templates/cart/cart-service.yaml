@@ -1,0 +1,17 @@
+{{- if .Values.cart.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.cart.service.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.cart.labels.app }}
+spec:
+  type: {{ .Values.cart.service.type }}
+  selector:
+    app: {{ .Values.cart.labels.app }}
+  ports:
+    - name: http
+      port: {{ .Values.cart.service.port }}
+      targetPort: {{ .Values.cart.service.targetPort }}
+{{- end }}

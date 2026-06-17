@@ -66,8 +66,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\dev-up.ps1
 
 ### Linux
 ```bash
-chmod +x ./scripts/dev-up.sh
-./scripts/dev-up.sh
+chmod +x ./scripts/dev/dev-up.sh
+./scripts/dev/dev-up.sh
 ```
 
 ## Run Microservices
@@ -82,7 +82,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\run-services.ps1
 
 ```bash
 chmod +x ./scripts/run-services.sh
-./scripts/run-services.sh
+./scripts/dev/run-services.sh
 ```
 
 ## Verify Platform Health
@@ -96,8 +96,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\health-check.ps1
 ### Linux
 
 ```bash
-chmod +x ./scripts/health-check.sh
-./scripts/health-check.sh
+chmod +x ./scripts/dev/health-check.sh
+./scripts/dev/health-check.sh
 ```
 
 Expected output:
@@ -128,8 +128,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\dev-stop-services.ps1
 ### Linux
 
 ```bash
-chmod +x ./scripts/dev-stop-services.sh
-./scripts/dev-stop-services.sh
+chmod +x ./scripts/dev/dev-stop-services.sh
+./scripts/dev/dev-stop-services.sh
 ```
 
 ## Stop Infrastructure
@@ -256,39 +256,211 @@ production = full observability
 ```bash
 docker compose -f ./platform/docker/docker-compose.dev.yml up -d
 
-./scripts/dev-up.sh
+./scripts/dev/dev-up.sh
 
-./scripts/run-services.sh
+./scripts/dev/run-services.sh
 
-./scripts/health-check.sh
+./scripts/dev/health-check.sh
 ```
 
 ### Shutdown
 
 ```bash
-./scripts/dev-stop-services.sh
+./scripts/dev/dev-stop-services.sh
 
 docker compose -f ./platform/docker/docker-compose.dev.yml down
 ```
 
-## Architecture Overview
+## Local Kubernetes deployment with Helm
 
-Atlas Commerce is a cloud-native e-commerce platform built to demonstrate modern software engineering and DevOps practices.
+Atlas Commerce includes a modular Helm chart for deploying the core platform services locally on Minikube.
 
-Core technologies include:
+### Current Helm components
 
-* Spring Boot
-* PostgreSQL
-* Redis
-* Apache Kafka
-* RabbitMQ
-* Docker
-* Kubernetes
-* Helm
-* ArgoCD
-* Prometheus
-* Grafana
-* OpenTelemetry
-* AWS EKS
+The local Helm deployment currently includes:
 
-The project is designed to support both local development and cloud-native deployments while maintaining a consistent developer experience across environments.
+```text
+auth-service
+gateway-service
+catalog-service
+redis
+kafka
+postgres-auth
+postgres-catalog
+```
+
+The Helm chart is located at:
+
+```text
+platform/helm/atlas-commerce
+```
+
+The local namespace used by default is:
+
+```text
+atlas-helm
+```
+
+### Helm values structure
+
+The chart uses separate values files per component:
+
+```text
+platform/helm/atlas-commerce/values/
+├── auth.yaml
+├── catalog.yaml
+├── gateway.yaml
+├── kafka.yaml
+├── postgres.yaml
+├── redis.yaml
+└── secrets-local.yaml
+```
+
+Important:
+
+```text
+secrets-local.yaml must not be committed to Git.
+```
+
+It contains local secrets such as JWT secrets and database passwords.
+
+### Helm helper scripts
+
+To avoid running long Helm commands manually, use the helper scripts located in:
+
+```text
+scripts/helm/
+```
+
+Available scripts:
+
+```text
+template-local.sh
+dry-run-local.sh
+upgrade-local.sh
+status-local.sh
+
+template-local.ps1
+dry-run-local.ps1
+upgrade-local.ps1
+status-local.ps1
+```
+
+### Linux / Git Bash usage
+
+Render the Helm manifests:
+
+```bash
+./scripts/helm/template-local.sh
+```
+
+Run a Helm dry-run:
+
+```bash
+./scripts/helm/dry-run-local.sh
+```
+
+Install or upgrade the local release:
+
+```bash
+./scripts/helm/upgrade-local.sh
+```
+
+Check Helm, pods, services and PVCs:
+
+```bash
+./scripts/helm/status-local.sh
+```
+
+### Windows PowerShell usage
+
+PowerShell may block `.ps1` execution by default. To allow scripts only in the current terminal session, run:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+
+Then run:
+
+```powershell
+.\scripts\helm\template-local.ps1
+.\scripts\helm\dry-run-local.ps1
+.\scripts\helm\upgrade-local.ps1
+.\scripts\helm\status-local.ps1
+```
+
+Alternatively, run a script directly with bypass:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\helm\template-local.ps1
+```
+
+### Validate the local deployment
+
+Check pods:
+
+```bash
+kubectl get pods -n atlas-helm
+```
+
+Check services:
+
+```bash
+kubectl get svc -n atlas-helm
+```
+
+Check persistent volumes:
+
+```bash
+kubectl get pvc -n atlas-helm
+```
+
+Check Helm status:
+
+```bash
+helm status atlas -n atlas-helm
+```
+
+### Gateway port-forward
+
+Expose the API Gateway locally:
+
+```bash
+kubectl port-forward -n atlas-helm svc/gateway-service 8080:80
+```
+
+Then test:
+
+```bash
+curl http://localhost:8080/actuator/health
+curl http://localhost:8080/auth/v3/api-docs
+curl http://localhost:8080/catalog/v3/api-docs
+```
+
+Expected result:
+
+```text
+Gateway health: UP
+Auth OpenAPI reachable through Gateway
+Catalog OpenAPI reachable through Gateway
+```
+
+### Logs
+
+Check service logs:
+
+```bash
+kubectl logs -n atlas-helm deploy/gateway --tail=50
+kubectl logs -n atlas-helm deploy/auth --tail=50
+kubectl logs -n atlas-helm deploy/catalog --tail=50
+kubectl logs -n atlas-helm deploy/kafka --tail=50
+```
+
+Check that local Gateway is not trying to export traces to Tempo:
+
+```bash
+kubectl logs -n atlas-helm deploy/gateway --since=2m | grep -iE "tempo|otlp|failed to export"
+```
+
+No output means the local OTLP/Tempo export is disabled correctly.
+

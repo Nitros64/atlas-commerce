@@ -1,0 +1,119 @@
+{{- if .Values.order.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.order.deployment.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.order.labels.app }}
+spec:
+  replicas: {{ .Values.order.deployment.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
+  selector:
+    matchLabels:
+      app: {{ .Values.order.labels.app }}
+  template:
+    metadata:
+      annotations:
+        checksum/config-order: {{ include (print $.Template.BasePath "/order/cm-order.yaml") . | sha256sum }}
+      labels:
+        app: {{ .Values.order.labels.app }}
+        tier: {{ .Values.order.labels.tier }}
+        version: {{ .Values.order.labels.version }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.order.deployment.terminationGracePeriodSeconds }}
+      containers:
+        - name: {{ .Values.order.labels.app }}
+          image: "{{ .Values.order.deployment.image.repository }}:{{ .Values.order.deployment.image.tag }}"
+          imagePullPolicy: {{ .Values.order.deployment.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.order.deployment.containerPort }}
+              name: http
+
+          envFrom:
+            - configMapRef:
+                name: cm-order
+            - configMapRef:
+                name: cm-redis
+            - configMapRef:
+                name: cm-kafka
+
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.order.javaToolOptions | quote }}
+
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.instances.order.secretName }}
+                  key: POSTGRES_USER
+
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.instances.order.secretName }}
+                  key: POSTGRES_PASSWORD
+
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: REDIS_PASSWORD
+
+            - name: SECURITY_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.jwt.name }}
+                  key: SECURITY_JWT_SECRET
+
+            - name: OTEL_SDK_DISABLED
+              value: {{ .Values.order.otel.sdkDisabled | quote }}
+
+            - name: OTEL_TRACES_EXPORTER
+              value: {{ .Values.order.otel.tracesExporter | quote }}
+
+            - name: OTEL_METRICS_EXPORTER
+              value: {{ .Values.order.otel.metricsExporter | quote }}
+
+            - name: OTEL_LOGS_EXPORTER
+              value: {{ .Values.order.otel.logsExporter | quote }}
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.order.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.order.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.order.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.order.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.order.probes.startup.failureThreshold }}
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: {{ .Values.order.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.order.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.order.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.order.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.order.probes.liveness.failureThreshold }}
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ .Values.order.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.order.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.order.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.order.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.order.probes.readiness.failureThreshold }}
+
+          resources:
+            requests:
+              cpu: {{ .Values.order.resources.requests.cpu | quote }}
+              memory: {{ .Values.order.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.order.resources.limits.cpu | quote }}
+              memory: {{ .Values.order.resources.limits.memory | quote }}
+{{- end }}

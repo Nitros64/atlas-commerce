@@ -1,0 +1,90 @@
+shipping:
+  enabled: true
+
+  deployment:
+    name: shipping
+    replicas: 1
+    image:
+      repository: nitros64/shipping-service
+      tag: "1.0.9"
+      pullPolicy: Always
+    containerPort: 8089
+    terminationGracePeriodSeconds: 30
+
+  labels:
+    app: shipping
+    tier: backend
+    version: v1
+
+  service:
+    name: shipping-service
+    type: ClusterIP
+    port: 80
+    targetPort: 8089
+
+  javaToolOptions: >-
+    -XX:+UseContainerSupport
+    -XX:MaxRAMPercentage=25.0
+    -XX:InitialRAMPercentage=6.0
+    -XX:MaxMetaspaceSize=192m
+    -XX:ReservedCodeCacheSize=64m
+    -Xss512k
+    -XX:+ExitOnOutOfMemoryError
+
+
+  datasource:
+    url: jdbc:postgresql://postgres-shipping:5432/shippingdb
+    driverClassName: org.postgresql.Driver
+    ddlAuto: validate
+
+  management:
+    healthProbesEnabled: "true"
+    healthShowDetails: always
+    healthRedisEnabled: "false"
+    healthRabbitEnabled: "false"
+    healthKafkaEnabled: "false"
+    tracingEnabled: "false"
+    otlpMetricsExportEnabled: "false"
+    otlpTracingExportEnabled: "false"
+    tracingExportEnabled: "false"
+    tracingExportOtlpEnabled: "false"
+    loggingExportEnabled: "false"
+    loggingExportOtlpEnabled: "false"
+
+  otel:
+    sdkDisabled: "true"
+    tracesExporter: "none"
+    metricsExporter: "none"
+    logsExporter: "none"
+
+  resources:
+    requests:
+      cpu: "150m"
+      memory: "768Mi"
+    limits:
+      cpu: "1500m"
+      memory: "3Gi"
+
+  probes:
+    startup:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 45
+    liveness:
+      initialDelaySeconds: 180
+      periodSeconds: 30
+      timeoutSeconds: 10
+      failureThreshold: 5
+    readiness:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 6
+
+  networkPolicy:
+    enabled: true
+    allowedIngressApps:
+      - gateway
+      - order
+      - prometheus

@@ -1,0 +1,72 @@
+gateway:
+  enabled: true
+
+  deployment:
+    name: gateway
+    replicas: 1
+    image:
+      repository: nitros64/api-gateway
+      tag: "1.0.26"
+      pullPolicy: Always
+    containerPort: 8080
+
+  labels:
+    app: gateway
+    tier: backend
+    version: v1
+
+  service:
+    name: gateway-service
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+
+  javaToolOptions: >-
+    -XX:+UseContainerSupport
+    -XX:MaxRAMPercentage=35.0
+    -XX:InitialRAMPercentage=8.0
+    -XX:MaxMetaspaceSize=128m
+
+  env:
+    springProfilesActive: k8s
+    redisHost: redis
+    redisPort: "6379"
+    redisSecretName: redis-secret
+    jwtSecretName: jwt-secret
+    managementHealthRedisEnabled: "false"
+    managementTracingEnabled: "false"
+    managementOtlpMetricsExportEnabled: "false"
+    otelTracesExporter: "none"
+    otelMetricsExporter: "none"
+    otelLogsExporter: "none"
+    otelSdkDisabled: "true"
+    managementOtlpTracingExportEnabled: "false"
+    managementTracingExportEnabled: "false"
+    managementTracingExportOtlpEnabled: "false"
+    managementLoggingExportEnabled: "false"
+    managementLoggingExportOtlpEnabled: "false"
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+
+  probes:
+    startup:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 45
+    liveness:
+      initialDelaySeconds: 180
+      periodSeconds: 30
+      timeoutSeconds: 10
+      failureThreshold: 5
+    readiness:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 6      

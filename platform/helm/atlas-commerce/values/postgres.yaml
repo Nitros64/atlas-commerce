@@ -1,0 +1,211 @@
+postgres:
+  enabled: true
+
+  image:
+    repository: postgres
+    tag: "16"
+    pullPolicy: IfNotPresent
+
+  defaultStorageClassName: standard
+
+  networkPolicy:
+    enabled: true
+
+  instances:
+    auth:
+      enabled: true
+      name: postgres-auth
+      secretName: postgres-auth-secret
+      database: authdb
+      username: atlas
+      password: atlas
+      replicas: 1
+      storage: 2Gi
+      resources:
+        requests:
+          cpu: "25m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
+          memory: "256Mi"
+      allowedApps:
+        - auth    
+
+    catalog:
+      enabled: true
+      name: postgres-catalog
+      secretName: postgres-catalog-secret
+      database: catalogdb
+      username: atlas
+      password: atlas
+      replicas: 1
+      storage: 2Gi
+      resources:
+        requests:
+          cpu: "25m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
+          memory: "256Mi"
+      allowedApps:
+        - catalog    
+
+    cart:
+      enabled: true
+      name: postgres-cart
+      secretName: postgres-cart-secret
+      database: cartdb
+      username: cart
+      password: cart123
+      replicas: 1
+      storage: 2Gi
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
+        limits:
+          cpu: "500m"
+          memory: "512Mi"    
+      allowedApps:
+        - cart
+        - postgres-backup  
+    
+    coupon:
+      enabled: true
+      name: postgres-coupon
+      secretName: postgres-coupon-secret
+      database: coupondb
+      username: coupon
+      password: coupon123
+      replicas: 1
+      storage: 2Gi
+      allowedApps:
+        - coupon
+        - postgres-backup
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
+        limits:
+          cpu: "500m"
+          memory: "512Mi"   
+    
+    inventory:
+      enabled: true
+      name: postgres-inventory
+      secretName: postgres-inventory-secret
+      database: inventorydb
+      username: inventory
+      password: inventory123
+      replicas: 1
+      storage: 2Gi
+      allowedApps:
+        - inventory
+        - postgres-backup
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
+        limits:
+          cpu: "500m"
+          memory: "512Mi"      
+    
+    payment:
+      enabled: true
+      name: postgres-payment
+      secretName: postgres-payment-secret
+      database: paymentdb
+      username: payment
+      password: payment123
+      replicas: 1
+      storage: 2Gi
+      allowedApps:
+        - payment
+        - postgres-backup
+      resources:
+        requests:
+          cpu: "25m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
+          memory: "256Mi"    
+
+    order:
+      enabled: true
+      name: postgres-order
+      secretName: postgres-order-secret
+      database: orderdb
+      username: atlas
+      password: atlas
+      replicas: 1
+      storage: 2Gi
+      allowedApps:
+        - order
+        - postgres-backup
+      resources:
+        requests:
+          cpu: "25m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
+          memory: "256Mi"     
+    
+    shipping:
+      enabled: true
+      name: postgres-shipping
+      secretName: postgres-shipping-secret
+      database: shippingdb
+      username: shipping
+      password: shipping123
+      replicas: 1
+      storage: 2Gi
+      allowedApps:
+        - shipping
+        - postgres-backup
+      resources:
+        requests:
+          cpu: "25m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
+          memory: "256Mi"     
+
+    notification:
+      enabled: true
+      name: postgres-notification
+      secretName: postgres-notification-secret
+      database: notificationdb
+      username: notification
+      password: notification123
+      replicas: 1
+      storage: 2Gi
+      allowedApps:
+        - notification
+        - postgres-backup
+      resources:
+        requests:
+          cpu: "25m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
+          memory: "256Mi"      
+
+    audit:
+      enabled: true
+      name: postgres-audit
+      secretName: postgres-audit-secret
+      database: auditdb
+      username: audit
+      password: audit123
+      replicas: 1
+      storage: 2Gi
+      allowedApps:
+        - audit
+        - postgres-backup
+      resources:
+        requests:
+          cpu: "25m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
+          memory: "256Mi"      

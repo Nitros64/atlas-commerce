@@ -1,0 +1,91 @@
+order:
+  enabled: true
+
+  deployment:
+    name: order
+    replicas: 1
+    image:
+      repository: nitros64/order-service
+      tag: "1.0.27"
+      pullPolicy: Always
+    containerPort: 8083
+    terminationGracePeriodSeconds: 30
+
+  labels:
+    app: order
+    tier: backend
+    version: v1
+
+  service:
+    name: order-service
+    type: ClusterIP
+    port: 80
+    targetPort: 8083
+
+  javaToolOptions: >-
+    -XX:+UseContainerSupport
+    -XX:MaxRAMPercentage=25.0
+    -XX:InitialRAMPercentage=6.0
+    -XX:MaxMetaspaceSize=192m
+    -XX:ReservedCodeCacheSize=64m
+    -Xss512k
+    -XX:+ExitOnOutOfMemoryError
+
+
+  datasource:
+    url: jdbc:postgresql://postgres-order:5432/orderdb
+    driverClassName: org.postgresql.Driver
+    ddlAuto: validate
+
+  management:
+    healthProbesEnabled: "true"
+    healthShowDetails: always
+    healthRedisEnabled: "false"
+    healthRabbitEnabled: "false"
+    healthKafkaEnabled: "false"
+    tracingEnabled: "false"
+    otlpMetricsExportEnabled: "false"
+    otlpTracingExportEnabled: "false"
+    tracingExportEnabled: "false"
+    tracingExportOtlpEnabled: "false"
+    loggingExportEnabled: "false"
+    loggingExportOtlpEnabled: "false"  
+
+  otel:
+    sdkDisabled: "true"
+    tracesExporter: "none"
+    metricsExporter: "none"
+    logsExporter: "none"
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+
+  probes:
+    startup:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 45
+    liveness:
+      initialDelaySeconds: 180
+      periodSeconds: 30
+      timeoutSeconds: 10
+      failureThreshold: 5
+    readiness:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 6
+
+  networkPolicy:
+    enabled: true
+    allowedIngressApps:
+      - gateway
+      - payment
+      - shipping
+      - prometheus

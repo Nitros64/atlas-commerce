@@ -1,0 +1,98 @@
+audit:
+  enabled: true
+
+  deployment:
+    name: audit
+    replicas: 1
+    image:
+      repository: nitros64/audit-service
+      tag: "1.0.3"
+      pullPolicy: Always
+    containerPort: 8093
+    terminationGracePeriodSeconds: 30
+
+  labels:
+    app: audit
+    tier: backend
+    version: v1
+
+  service:
+    name: audit-service
+    type: ClusterIP
+    port: 80
+    targetPort: 8093
+
+  javaToolOptions: >-
+    -XX:+UseContainerSupport
+    -XX:MaxRAMPercentage=25.0
+    -XX:InitialRAMPercentage=6.0
+    -XX:MaxMetaspaceSize=192m
+    -XX:ReservedCodeCacheSize=64m
+    -Xss512k
+    -XX:+ExitOnOutOfMemoryError
+
+  datasource:
+    url: jdbc:postgresql://postgres-audit:5432/auditdb
+    driverClassName: org.postgresql.Driver
+    ddlAuto: validate
+
+  management:
+    healthProbesEnabled: "true"
+    healthShowDetails: always
+    healthRedisEnabled: "false"
+    healthRabbitEnabled: "false"
+    healthKafkaEnabled: "false"
+    tracingEnabled: "false"
+    otlpMetricsExportEnabled: "false"
+    otlpTracingExportEnabled: "false"
+    tracingExportEnabled: "false"
+    tracingExportOtlpEnabled: "false"
+    loggingExportEnabled: "false"
+    loggingExportOtlpEnabled: "false"
+
+  otel:
+    sdkDisabled: "true"
+    tracesExporter: "none"
+    metricsExporter: "none"
+    logsExporter: "none"
+
+  resources:
+    requests:
+      cpu: "150m"
+      memory: "768Mi"
+    limits:
+      cpu: "1500m"
+      memory: "3Gi"
+
+  probes:
+    startup:
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 30
+    liveness:
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 3
+      failureThreshold: 3
+    readiness:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 6
+
+  networkPolicy:
+    enabled: true
+    allowedIngressApps:
+      - gateway
+      - auth
+      - catalog
+      - cart
+      - pricing
+      - coupon
+      - inventory
+      - payment
+      - order
+      - shipping
+      - notification
+      - prometheus

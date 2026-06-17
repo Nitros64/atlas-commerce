@@ -1,0 +1,19 @@
+{{- if .Values.coupon.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-coupon
+  namespace: {{ .Release.Namespace }}
+data:
+  SPRING_PROFILES_ACTIVE: "docker"
+  SERVER_PORT: {{ .Values.coupon.deployment.containerPort | quote }}
+  SPRING_DATASOURCE_URL: {{ .Values.coupon.datasource.url | quote }}
+  SPRING_DATASOURCE_USERNAME: {{ .Values.postgres.instances.coupon.username | quote }}
+  SPRING_DATASOURCE_DRIVER_CLASS_NAME: {{ .Values.coupon.datasource.driverClassName | quote }}
+  SPRING_JPA_HIBERNATE_DDL_AUTO: {{ .Values.coupon.datasource.ddlAuto | quote }}
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: {{ .Values.coupon.management.healthProbesEnabled | quote }}
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: {{ .Values.coupon.management.healthShowDetails | quote }}
+  MANAGEMENT_HEALTH_REDIS_ENABLED: {{ .Values.coupon.management.healthRedisEnabled | quote }}
+  MANAGEMENT_HEALTH_RABBIT_ENABLED: {{ .Values.coupon.management.healthRabbitEnabled | quote }}
+  MANAGEMENT_HEALTH_KAFKA_ENABLED: {{ .Values.coupon.management.healthKafkaEnabled | quote }}
+{{- end }}

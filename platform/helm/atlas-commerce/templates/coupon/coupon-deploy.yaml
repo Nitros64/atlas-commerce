@@ -1,0 +1,85 @@
+{{- if .Values.coupon.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.coupon.deployment.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.coupon.labels.app }}
+spec:
+  replicas: {{ .Values.coupon.deployment.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
+  selector:
+    matchLabels:
+      app: {{ .Values.coupon.labels.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.coupon.labels.app }}
+        tier: {{ .Values.coupon.labels.tier }}
+        version: {{ .Values.coupon.labels.version }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.coupon.deployment.terminationGracePeriodSeconds }}
+      containers:
+        - name: {{ .Values.coupon.labels.app }}
+          image: "{{ .Values.coupon.deployment.image.repository }}:{{ .Values.coupon.deployment.image.tag }}"
+          imagePullPolicy: {{ .Values.coupon.deployment.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.coupon.deployment.containerPort }}
+              name: http
+
+          envFrom:
+            - configMapRef:
+                name: cm-coupon
+            - secretRef:
+                name: {{ .Values.secrets.jwt.name }}
+
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.coupon.javaToolOptions | quote }}
+
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.instances.coupon.secretName }}
+                  key: POSTGRES_PASSWORD
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.coupon.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.coupon.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.coupon.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.coupon.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.coupon.probes.startup.failureThreshold }}
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: {{ .Values.coupon.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.coupon.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.coupon.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.coupon.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.coupon.probes.liveness.failureThreshold }}
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ .Values.coupon.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.coupon.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.coupon.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.coupon.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.coupon.probes.readiness.failureThreshold }}
+
+          resources:
+            requests:
+              cpu: {{ .Values.coupon.resources.requests.cpu | quote }}
+              memory: {{ .Values.coupon.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.coupon.resources.limits.cpu | quote }}
+              memory: {{ .Values.coupon.resources.limits.memory | quote }}
+{{- end }}

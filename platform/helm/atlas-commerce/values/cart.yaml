@@ -1,0 +1,76 @@
+cart:
+  enabled: true
+
+  deployment:
+    name: cart
+    replicas: 1
+    image:
+      repository: nitros64/cart-service
+      tag: "1.0.2"
+      pullPolicy: Always
+    containerPort: 8085
+    terminationGracePeriodSeconds: 30
+
+  labels:
+    app: cart
+    tier: backend
+    version: v1
+
+  service:
+    name: cart-service
+    type: ClusterIP
+    port: 80
+    targetPort: 8085
+
+  javaToolOptions: >-
+    -XX:+UseContainerSupport
+    -XX:MaxRAMPercentage=25.0
+    -XX:InitialRAMPercentage=6.0
+    -XX:MaxMetaspaceSize=192m
+    -XX:ReservedCodeCacheSize=64m
+    -Xss512k
+    -XX:+ExitOnOutOfMemoryError
+
+  datasource:
+    url: jdbc:postgresql://postgres-cart:5432/cartdb
+    driverClassName: org.postgresql.Driver
+    ddlAuto: update
+
+  management:
+    healthProbesEnabled: "true"
+    healthShowDetails: always
+    healthRedisEnabled: "false"
+    healthRabbitEnabled: "false"
+    healthKafkaEnabled: "false"
+
+  networkPolicy:
+    enabled: true
+    allowedIngressApps:
+      - gateway
+      - order
+      - prometheus
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+
+  probes:
+    startup:
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 30
+    liveness:
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 3
+      failureThreshold: 3
+    readiness:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 6

@@ -1,0 +1,17 @@
+{{- if .Values.audit.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.audit.service.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.audit.labels.app }}
+spec:
+  type: {{ .Values.audit.service.type }}
+  selector:
+    app: {{ .Values.audit.labels.app }}
+  ports:
+    - name: http
+      port: {{ .Values.audit.service.port }}
+      targetPort: {{ .Values.audit.service.targetPort }}
+{{- end }}

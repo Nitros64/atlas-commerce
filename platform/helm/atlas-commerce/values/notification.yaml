@@ -1,0 +1,89 @@
+notification:
+  enabled: true
+
+  deployment:
+    name: notification
+    replicas: 1
+    image:
+      repository: nitros64/notification-service
+      tag: "1.0.3"
+      pullPolicy: Always
+    containerPort: 8090
+    terminationGracePeriodSeconds: 30
+
+  labels:
+    app: notification
+    tier: backend
+    version: v1
+
+  service:
+    name: notification-service
+    type: ClusterIP
+    port: 80
+    targetPort: 8090
+
+  javaToolOptions: >-
+    -XX:+UseContainerSupport
+    -XX:MaxRAMPercentage=25.0
+    -XX:InitialRAMPercentage=6.0
+    -XX:MaxMetaspaceSize=192m
+    -XX:ReservedCodeCacheSize=64m
+    -Xss512k
+    -XX:+ExitOnOutOfMemoryError
+
+  datasource:
+    url: jdbc:postgresql://postgres-notification:5432/notificationdb
+    driverClassName: org.postgresql.Driver
+    ddlAuto: validate
+
+  management:
+    healthProbesEnabled: "true"
+    healthShowDetails: always
+    healthRedisEnabled: "false"
+    healthRabbitEnabled: "false"
+    healthKafkaEnabled: "false"
+    tracingEnabled: "false"
+    otlpMetricsExportEnabled: "false"
+    otlpTracingExportEnabled: "false"
+    tracingExportEnabled: "false"
+    tracingExportOtlpEnabled: "false"
+    loggingExportEnabled: "false"
+    loggingExportOtlpEnabled: "false"
+
+  otel:
+    sdkDisabled: "true"
+    tracesExporter: "none"
+    metricsExporter: "none"
+    logsExporter: "none"
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
+      cpu: "700m"
+      memory: "2Gi"
+
+  probes:
+    startup:
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 30
+    liveness:
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 3
+      failureThreshold: 3
+    readiness:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 6
+
+  networkPolicy:
+    enabled: true
+    allowedIngressApps:
+      - gateway
+      - order
+      - prometheus

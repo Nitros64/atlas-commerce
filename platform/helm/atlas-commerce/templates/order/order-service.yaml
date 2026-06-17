@@ -1,0 +1,17 @@
+{{- if .Values.order.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.order.service.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.order.labels.app }}
+spec:
+  type: {{ .Values.order.service.type }}
+  selector:
+    app: {{ .Values.order.labels.app }}
+  ports:
+    - name: http
+      port: {{ .Values.order.service.port }}
+      targetPort: {{ .Values.order.service.targetPort }}
+{{- end }}

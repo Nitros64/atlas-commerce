@@ -1,0 +1,17 @@
+{{- if .Values.auth.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-auth-spring-datasource
+  namespace: {{ .Release.Namespace }}
+data:
+  SPRING_DATASOURCE_URL: {{ .Values.auth.datasource.url | quote }}
+  SPRING_DATASOURCE_USERNAME: {{ .Values.auth.datasource.username | quote }}
+  SPRING_DATASOURCE_DRIVER_CLASS_NAME: {{ .Values.auth.datasource.driverClassName | quote }}
+  SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: {{ .Values.auth.datasource.hikari.connectionTimeout | quote }}
+  SPRING_DATASOURCE_HIKARI_VALIDATION_TIMEOUT: {{ .Values.auth.datasource.hikari.validationTimeout | quote }}
+  SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: {{ .Values.auth.datasource.hikari.idleTimeout | quote }}
+  SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: {{ .Values.auth.datasource.hikari.maxLifetime | quote }}
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: {{ .Values.auth.datasource.hikari.maximumPoolSize | quote }}
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: {{ .Values.auth.datasource.hikari.minimumIdle | quote }}
+{{- end }}    

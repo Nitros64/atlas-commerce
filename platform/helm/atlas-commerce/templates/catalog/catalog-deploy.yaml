@@ -1,0 +1,103 @@
+{{- if .Values.catalog.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.catalog.deployment.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.catalog.labels.app }}
+spec:
+  replicas: {{ .Values.catalog.deployment.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
+  selector:
+    matchLabels:
+      app: {{ .Values.catalog.labels.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.catalog.labels.app }}
+        tier: {{ .Values.catalog.labels.tier }}
+        version: {{ .Values.catalog.labels.version }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.catalog.deployment.terminationGracePeriodSeconds }}
+      containers:
+        - name: {{ .Values.catalog.labels.app }}
+          image: "{{ .Values.catalog.deployment.image.repository }}:{{ .Values.catalog.deployment.image.tag }}"
+          imagePullPolicy: {{ .Values.catalog.deployment.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.catalog.deployment.containerPort }}
+              name: http
+
+          envFrom:
+            - configMapRef:
+                name: cm-catalog
+            - configMapRef:
+                name: {{ .Values.kafka.configMapName }}
+
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.catalog.javaToolOptions | quote }}
+
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.instances.catalog.secretName }}
+                  key: POSTGRES_USER
+
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.instances.catalog.secretName }}
+                  key: POSTGRES_PASSWORD
+
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.catalog.redis.secretName }}
+                  key: REDIS_PASSWORD
+
+            - name: SECURITY_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.catalog.jwt.secretName }}
+                  key: SECURITY_JWT_SECRET
+
+          resources:
+            requests:
+              cpu: {{ .Values.catalog.resources.requests.cpu | quote }}
+              memory: {{ .Values.catalog.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.catalog.resources.limits.cpu | quote }}
+              memory: {{ .Values.catalog.resources.limits.memory | quote }}
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.catalog.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.catalog.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.catalog.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.catalog.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.catalog.probes.startup.failureThreshold }}
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: {{ .Values.catalog.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.catalog.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.catalog.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.catalog.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.catalog.probes.liveness.failureThreshold }}
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ .Values.catalog.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.catalog.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.catalog.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.catalog.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.catalog.probes.readiness.failureThreshold }}
+{{- end }}

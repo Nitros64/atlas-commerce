@@ -1,0 +1,10 @@
+{{- if .Values.kafka.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.kafka.configMapName }}
+  namespace: {{ .Release.Namespace }}
+data:
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: {{ .Values.kafka.bootstrapServers | quote }}
+  ORDER_EVENTS_TOPIC: {{ .Values.kafka.orderEventsTopic | quote }}
+{{- end }}

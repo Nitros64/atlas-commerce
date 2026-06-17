@@ -1,0 +1,12 @@
+{{- if .Values.pricing.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-pricing
+  namespace: {{ .Release.Namespace }}
+data:
+  SPRING_PROFILES_ACTIVE: "docker"
+  SERVER_PORT: {{ .Values.pricing.deployment.containerPort | quote }}
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: {{ .Values.pricing.management.healthProbesEnabled | quote }}
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: {{ .Values.pricing.management.healthShowDetails | quote }}
+{{- end }}

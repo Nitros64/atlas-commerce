@@ -1,0 +1,12 @@
+{{- if and .Values.auth.enabled .Values.auth.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: auth-pdb
+  namespace: {{ .Release.Namespace }}
+spec:
+  minAvailable: {{ .Values.auth.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      app: {{ .Values.auth.labels.app }}
+{{- end }}

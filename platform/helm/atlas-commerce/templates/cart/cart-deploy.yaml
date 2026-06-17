@@ -1,0 +1,95 @@
+{{- if .Values.cart.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.cart.deployment.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.cart.labels.app }}
+spec:
+  replicas: {{ .Values.cart.deployment.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
+  selector:
+    matchLabels:
+      app: {{ .Values.cart.labels.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.cart.labels.app }}
+        tier: {{ .Values.cart.labels.tier }}
+        version: {{ .Values.cart.labels.version }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.cart.deployment.terminationGracePeriodSeconds }}
+      containers:
+        - name: {{ .Values.cart.labels.app }}
+          image: "{{ .Values.cart.deployment.image.repository }}:{{ .Values.cart.deployment.image.tag }}"
+          imagePullPolicy: {{ .Values.cart.deployment.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.cart.deployment.containerPort }}
+              name: http
+
+          envFrom:
+            - configMapRef:
+                name: cm-cart
+
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.cart.javaToolOptions | quote }}
+
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.instances.cart.secretName }}
+                  key: POSTGRES_USER
+
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.instances.cart.secretName }}
+                  key: POSTGRES_PASSWORD
+
+            - name: SECURITY_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.jwt.name }}
+                  key: SECURITY_JWT_SECRET
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.cart.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.cart.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.cart.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.cart.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.cart.probes.startup.failureThreshold }}
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: {{ .Values.cart.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.cart.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.cart.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.cart.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.cart.probes.liveness.failureThreshold }}
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ .Values.cart.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.cart.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.cart.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.cart.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.cart.probes.readiness.failureThreshold }}
+
+          resources:
+            requests:
+              cpu: {{ .Values.cart.resources.requests.cpu | quote }}
+              memory: {{ .Values.cart.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.cart.resources.limits.cpu | quote }}
+              memory: {{ .Values.cart.resources.limits.memory | quote }}
+{{- end }}

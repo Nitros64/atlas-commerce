@@ -1,0 +1,52 @@
+auth:
+  enabled: false
+
+catalog:
+  enabled: false
+
+gateway:
+  enabled: false
+
+redis:
+  enabled: false
+
+kafka:
+  enabled: false
+
+postgres:
+  enabled: false
+
+cart:
+  enabled: false  
+
+pricing:
+  enabled: false
+
+coupon:
+  enabled: false  
+
+inventory:
+  enabled: false  
+
+payment:
+  enabled: false  
+
+order:
+  enabled: false  
+
+shipping:
+  enabled: false  
+
+notification:
+  enabled: false  
+
+audit:
+  enabled: false
+
+ingress:
+  enabled: false
+  className: nginx
+  host: atlas.local
+  gatewayServiceName: gateway-service
+  gatewayServicePort: 80
+  annotations: {} 

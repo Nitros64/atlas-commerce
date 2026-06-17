@@ -1,0 +1,69 @@
+catalog:
+  enabled: true
+
+  deployment:
+    name: catalog
+    replicas: 1
+    image:
+      repository: nitros64/catalog-service
+      tag: "1.0.6"
+      pullPolicy: Always
+    containerPort: 8082
+    terminationGracePeriodSeconds: 30
+
+  labels:
+    app: catalog
+    tier: backend
+    version: v1
+
+  service:
+    name: catalog-service
+    type: ClusterIP
+    port: 80
+    targetPort: 8082
+
+  javaToolOptions: >-
+    -XX:+UseContainerSupport
+    -XX:MaxRAMPercentage=25.0
+    -XX:InitialRAMPercentage=6.0
+    -XX:MaxMetaspaceSize=192m
+    -XX:ReservedCodeCacheSize=64m
+    -Xss512k
+    -XX:+ExitOnOutOfMemoryError
+
+  datasource:
+    url: jdbc:postgresql://postgres-catalog:5432/catalogdb
+    driverClassName: org.postgresql.Driver
+
+  redis:
+    host: redis
+    port: "6379"
+    secretName: redis-secret
+
+  jwt:
+    secretName: jwt-secret
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+
+  probes:
+    startup:
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 30
+    liveness:
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 3
+      failureThreshold: 3
+    readiness:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 6

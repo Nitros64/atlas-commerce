@@ -1,0 +1,17 @@
+{{- if .Values.inventory.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.inventory.service.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.inventory.labels.app }}
+spec:
+  type: {{ .Values.inventory.service.type }}
+  selector:
+    app: {{ .Values.inventory.labels.app }}
+  ports:
+    - name: http
+      port: {{ .Values.inventory.service.port }}
+      targetPort: {{ .Values.inventory.service.targetPort }}
+{{- end }}

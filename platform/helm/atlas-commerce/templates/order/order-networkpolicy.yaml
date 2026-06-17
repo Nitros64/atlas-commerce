@@ -1,0 +1,101 @@
+{{- if and .Values.order.enabled .Values.order.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: order-service-netpol
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ .Values.order.labels.app }}
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    - from:
+{{- range .Values.order.networkPolicy.allowedIngressApps }}
+        - podSelector:
+            matchLabels:
+              app: {{ . }}
+{{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.order.deployment.containerPort }}
+
+  egress:
+    # PostgreSQL order
+    - to:
+        - podSelector:
+            matchLabels:
+              app: {{ .Values.postgres.instances.order.name }}
+      ports:
+        - protocol: TCP
+          port: 5432
+
+    # Redis
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+
+    # Kafka
+    - to:
+        - podSelector:
+            matchLabels:
+              app: kafka
+      ports:
+        - protocol: TCP
+          port: 9092
+
+    # HTTP hacia servicios internos.
+    # Permitimos 80 y puertos reales para evitar problemas según CNI/DNAT.
+    - to:
+        - podSelector:
+            matchLabels:
+              app: cart
+        - podSelector:
+            matchLabels:
+              app: pricing
+        - podSelector:
+            matchLabels:
+              app: coupon
+        - podSelector:
+            matchLabels:
+              app: inventory
+        - podSelector:
+            matchLabels:
+              app: payment
+        - podSelector:
+            matchLabels:
+              app: catalog
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 8082
+        - protocol: TCP
+          port: 8084
+        - protocol: TCP
+          port: 8085
+        - protocol: TCP
+          port: 8086
+        - protocol: TCP
+          port: 8087
+        - protocol: TCP
+          port: 8088
+
+    # DNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+{{- end }}

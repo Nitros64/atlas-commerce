@@ -1,0 +1,10 @@
+ingress:
+  enabled: true
+  className: nginx
+  host: atlas.local
+  gatewayServiceName: gateway-service
+  gatewayServicePort: 80
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"

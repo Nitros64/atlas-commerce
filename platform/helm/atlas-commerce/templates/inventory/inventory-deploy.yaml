@@ -1,0 +1,97 @@
+{{- if .Values.inventory.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.inventory.deployment.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.inventory.labels.app }}
+spec:
+  replicas: {{ .Values.inventory.deployment.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
+  selector:
+    matchLabels:
+      app: {{ .Values.inventory.labels.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.inventory.labels.app }}
+        tier: {{ .Values.inventory.labels.tier }}
+        version: {{ .Values.inventory.labels.version }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.inventory.deployment.terminationGracePeriodSeconds }}
+      containers:
+        - name: {{ .Values.inventory.labels.app }}
+          image: "{{ .Values.inventory.deployment.image.repository }}:{{ .Values.inventory.deployment.image.tag }}"
+          imagePullPolicy: {{ .Values.inventory.deployment.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.inventory.deployment.containerPort }}
+              name: http
+
+          envFrom:
+            - configMapRef:
+                name: cm-inventory
+            - secretRef:
+                name: {{ .Values.secrets.jwt.name }}
+
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.inventory.javaToolOptions | quote }}
+
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.instances.inventory.secretName }}
+                  key: POSTGRES_PASSWORD
+
+            - name: OTEL_SDK_DISABLED
+              value: {{ .Values.inventory.otel.sdkDisabled | quote }}
+
+            - name: OTEL_TRACES_EXPORTER
+              value: {{ .Values.inventory.otel.tracesExporter | quote }}
+
+            - name: OTEL_METRICS_EXPORTER
+              value: {{ .Values.inventory.otel.metricsExporter | quote }}
+
+            - name: OTEL_LOGS_EXPORTER
+              value: {{ .Values.inventory.otel.logsExporter | quote }}
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.inventory.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.inventory.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.inventory.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.inventory.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.inventory.probes.startup.failureThreshold }}
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: {{ .Values.inventory.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.inventory.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.inventory.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.inventory.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.inventory.probes.liveness.failureThreshold }}
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ .Values.inventory.deployment.containerPort }}
+            initialDelaySeconds: {{ .Values.inventory.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.inventory.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.inventory.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.inventory.probes.readiness.failureThreshold }}
+
+          resources:
+            requests:
+              cpu: {{ .Values.inventory.resources.requests.cpu | quote }}
+              memory: {{ .Values.inventory.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.inventory.resources.limits.cpu | quote }}
+              memory: {{ .Values.inventory.resources.limits.memory | quote }}
+{{- end }}

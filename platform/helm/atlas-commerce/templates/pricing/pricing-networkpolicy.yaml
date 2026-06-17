@@ -1,0 +1,37 @@
+{{- if and .Values.pricing.enabled .Values.pricing.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pricing-service-netpol
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ .Values.pricing.labels.app }}
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    - from:
+{{- range .Values.pricing.networkPolicy.allowedIngressApps }}
+        - podSelector:
+            matchLabels:
+              app: {{ . }}
+{{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.pricing.deployment.containerPort }}
+
+  egress:
+    # DNS hacia kube-system
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+{{- end }}

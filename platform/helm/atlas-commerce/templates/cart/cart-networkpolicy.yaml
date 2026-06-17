@@ -1,0 +1,46 @@
+{{- if and .Values.cart.enabled .Values.cart.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cart-service-netpol
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ .Values.cart.labels.app }}
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    - from:
+{{- range .Values.cart.networkPolicy.allowedIngressApps }}
+        - podSelector:
+            matchLabels:
+              app: {{ . }}
+{{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.cart.deployment.containerPort }}
+
+  egress:
+    # Salida hacia PostgreSQL de cart
+    - to:
+        - podSelector:
+            matchLabels:
+              app: {{ .Values.postgres.instances.cart.name }}
+      ports:
+        - protocol: TCP
+          port: 5432
+
+    # DNS hacia kube-system
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+{{- end }}

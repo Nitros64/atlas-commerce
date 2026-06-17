@@ -1,0 +1,17 @@
+{{- if .Values.notification.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.notification.service.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.notification.labels.app }}
+spec:
+  type: {{ .Values.notification.service.type }}
+  selector:
+    app: {{ .Values.notification.labels.app }}
+  ports:
+    - name: http
+      port: {{ .Values.notification.service.port }}
+      targetPort: {{ .Values.notification.service.targetPort }}
+{{- end }}
