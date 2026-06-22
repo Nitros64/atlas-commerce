@@ -1,0 +1,14 @@
+project     = "atlas-commerce"
+environment = "shared"
+aws_region  = "eu-central-1"
+
+# Optional. Leave null to auto-generate:
+# atlas-commerce-shared-tfstate-<account-id>-eu-central-1
+# state_bucket_name = "atlas-commerce-shared-tfstate-123456789012-eu-central-1"
+
+# Optional. Leave null to auto-generate:
+# atlas-commerce-shared-terraform-locks
+# lock_table_name = "atlas-commerce-shared-terraform-locks"
+
+force_destroy_state_bucket              = false
+enable_lock_table_deletion_protection   = false

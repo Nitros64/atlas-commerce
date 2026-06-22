@@ -66,3 +66,31 @@ docker run -d \
   -e POSTGRES_PASSWORD=atlas \
   -p 5438:5432 \
   postgres:17
+
+#Audit
+docker run -d \
+  --name atlas-postgres-audit \
+  -e POSTGRES_DB=auditdb \
+  -e POSTGRES_USER=atlas \
+  -e POSTGRES_PASSWORD=atlas \
+  -p 5439:5432 \
+  postgres:17  
+
+#Coupon
+docker run -d \
+  --name atlas-postgres-coupon \
+  -e POSTGRES_DB=coupondb \
+  -e POSTGRES_USER=atlas \
+  -e POSTGRES_PASSWORD=atlas \
+  -p 5440:5432 \
+  postgres:17
+
+  #Cart-service
+  docker run -d \
+  --name atlas-postgres-cart \
+  -e POSTGRES_DB=cartdb \
+  -e POSTGRES_USER=atlas \
+  -e POSTGRES_PASSWORD=atlas \
+  -p 5441:5432 \
+  postgres:17
+

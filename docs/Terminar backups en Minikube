@@ -1,0 +1,51 @@
+Terminar backups en Minikube
+ pg_dump
+ Snapshots de PVC
+ Velero,
+
+Loki,
+
+PodDisruptionBudget (PDB),
+
+Vertical Pod Autoscaler (VPA),
+
+Affinity / AntiAffinity,
+
+Topology Spread Constraints,
+
+PriorityClass,
+
+ServiceAccount + RBAC
+ Role
+ RoleBinding
+ ServiceAccount,
+
+External Secrets
+ AWS Secrets Manager
+ Azure Key Vault,
+
+CSI Drivers,
+
+
+Scan de imagenes
+	Trivy
+	Grype,
+
+Firma de imágenes
+	Cosign
+	Sigstore,
+
+Admission Controllers
+	Kyverno
+	OPA Gatekeeper,
+
+Terraform puede crear:
+
+VPC
+Subnets
+Security Groups
+IAM Roles
+EKS Cluster
+Node Groups
+ECR
+S3
