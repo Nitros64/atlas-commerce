@@ -1,0 +1,196 @@
+FASE TERRAFORM 0 - Backend remoto
+
+	S3 bucket para terraform state
+	S3 native lockfile
+	KMS key opcional
+	versioning del bucket
+	encryption del bucket
+
+FASE TERRAFORM 1 - Networking base
+
+	VPC
+	public subnets
+	private subnets
+	internet gateway
+	route tables
+	NAT Gateway opcional
+	security groups base
+	VPC endpoints opcionales
+
+FASE TERRAFORM 2 - EKS
+
+	EKS cluster
+	EKS managed node groups
+	IAM role del cluster
+	IAM role de los worker nodes (IAM/IRSA)
+	OIDC provider para IRSA
+	security groups del cluster
+	addons básicos de EKS
+
+Add-ons:
+	vpc-cni
+	coredns
+	kube-proxy
+	aws-ebs-csi-driver
+	metrics-server opcional
+
+FASE TERRAFORM 3 - Container Registry
+
+	ECR repositories para los servicios
+	lifecycle policies
+	image scanning opcional
+
+FASE TERRAFORM 4 - IAM para Kubernetes
+
+	aws-load-balancer-controller
+	external-dns
+	cert-manager opcional
+	external-secrets-operator
+	velero
+	cluster-autoscaler
+	ebs-csi-driver	
+
+FASE TERRAFORM 5 - Ingress y DNS
+
+	Route 53 hosted zone o integración con una existente
+	ACM certificate
+	IAM policy para AWS Load Balancer Controller
+	IAM policy para ExternalDNS
+
+Luego en Kubernetes/Helm instalamos:	
+AWS Load Balancer Controller
+ExternalDNS
+Ingress de Atlas
+
+
+FASE TERRAFORM 6 - Bases de datos administradas
+
+RDS PostgreSQL para auth
+RDS PostgreSQL para catalog
+RDS PostgreSQL para order
+RDS PostgreSQL para payment
+RDS PostgreSQL para inventory
+...
+subnet group de RDS
+security groups de RDS
+parameter groups opcionales
+backup retention
+
+FASE TERRAFORM 7 - Redis administrado
+
+	ElastiCache Redis
+	subnet group
+	security group
+	parameter group opcional
+
+FASE TERRAFORM 8 - Kafka administrado
+
+	Amazon MSK
+	Amazon MSK Serverless
+	seguir Kafka dentro de Kubernetes
+
+
+FASE TERRAFORM 9 - Secrets
+
+	AWS Secrets Manager secrets
+	KMS key para secrets
+	IAM role para External Secrets Operator	
+
+Secrets típicos:
+	database passwords
+	jwt secret si aún aplica
+	external API keys
+	SMTP credentials
+	Kafka credentials si aplica
+
+
+FASE TERRAFORM 10 - Backups
+
+	S3 bucket para backups
+	KMS key para backups
+	IAM role para Velero
+	lifecycle policy del bucket
+
+	Velero backup/restore
+	migración EKS → AKS
+	disaster recovery
+
+
+FASE TERRAFORM 11 - Observabilidad AWS
+
+	CloudWatch log groups
+	IAM permissions para logs
+	S3 bucket para logs opcional
+
+Opcional avanzado:
+
+	Amazon Managed Prometheus
+	Amazon Managed Grafana	
+
+FASE TERRAFORM 12 - Seguridad perimetral
+
+	AWS WAF
+	WAF Web ACL
+	rate limiting rules
+	managed rule groups
+	association con ALB
+
+
+Lista final compacta, Lo que vamos a construir con Terraform para Atlas:
+
+1. Remote backend S3 para Terraform state
+2. VPC
+3. Public subnets
+4. Private subnets
+5. Internet Gateway
+6. NAT Gateway opcional
+7. Route tables
+8. Security groups
+9. EKS cluster
+10. EKS managed node groups
+11. EKS addons
+12. OIDC provider
+13. IAM roles
+14. IRSA roles para controllers
+15. ECR repositories
+16. ACM certificate
+17. Route 53 records/hosted zone
+18. IAM para AWS Load Balancer Controller
+19. IAM para ExternalDNS
+20. IAM para External Secrets Operator
+21. AWS Secrets Manager
+22. RDS PostgreSQL
+23. ElastiCache Redis
+24. S3 bucket para backups
+25. IAM para Velero
+26. CloudWatch log groups
+27. WAF opcional
+28. MSK opcional
+
+Mi orden recomendado
+
+No construiría todo de golpe, Haría:
+
+Bloque 1:
+S3 backend + VPC
+
+Bloque 2:
+EKS + node groups + addons
+
+Bloque 3:
+ECR + GitHub Actions hacia ECR
+
+Bloque 4:
+ALB Controller + Route 53 + ACM
+
+Bloque 5:
+Secrets Manager + External Secrets
+
+Bloque 6:
+RDS + Redis
+
+Bloque 7:
+Velero + S3 backups
+
+Bloque 8:
+WAF + MSK + extras enterprise

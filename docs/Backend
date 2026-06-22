@@ -1,0 +1,73 @@
+Backend
+	Java 21
+	Spring Boot
+	Spring Security
+	JWT
+	JPA/Hibernate
+	Flyway
+	PostgreSQL
+	Redis
+
+Arquitectura
+	Microservicios
+	API Gateway
+	Event-Driven Architecture
+	Kafka
+	RabbitMQ
+	Resilience4j
+	Observabilidad
+
+DevOps
+	Docker
+	GitHub Actions
+	Helm
+	ArgoCD
+	Terraform
+
+Kubernetes
+	Deployments
+	StatefulSets
+	PVC
+	Ingress
+	NetworkPolicies
+	RBAC
+	HPA
+	PDB
+	Affinity
+	Security Contexts
+
+Observabilidad
+	Prometheus
+	Grafana
+	Tempo
+	Loki
+	OpenTelemetry
+
+Cloud
+	VPC
+	ECR
+	EKS
+	AKS
+	Route53
+	RDS
+	IAM	
+	Backups
+	CloudWatch
+	S3 para backups
+	NAT Gateway opcional
+	IRSA
+	Security Groups
+	ALB Ingress Controller
+	ElastiCache Redis
+	ExternalDNS
+	Cert Manager
+	Migración cloud-to-cloud
+	Autoscaling
+
+Seguridad
+	Trivy
+	Dependabot
+	External Secrets
+	Kyverno
+	Pod Security Standards
+	Dependency Check
