@@ -10,7 +10,7 @@ variable "environment" {
   default     = "shared"
 }
 
-variable "aws_region" {
+variable "aws_region" { #The default AWS region will be Frankfurt. But we could change it without touching main.tf.
   description = "AWS region where the Terraform backend resources will be created."
   type        = string
   default     = "eu-central-1"

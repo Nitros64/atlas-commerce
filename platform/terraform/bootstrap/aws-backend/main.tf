@@ -1,32 +1,11 @@
 data "aws_caller_identity" "current" {}
 
-locals {
-  name_prefix = "${var.project}-${var.environment}"
-
-  state_bucket_name = coalesce(
-    var.state_bucket_name,
-    "${local.name_prefix}-tfstate-${data.aws_caller_identity.current.account_id}-${var.aws_region}"
-  )
-
-  lock_table_name = coalesce(
-    var.lock_table_name,
-    "${local.name_prefix}-terraform-locks"
-  )
-
-  common_tags = {
-    Project     = var.project
-    Environment = var.environment
-    ManagedBy   = "terraform"
-    Component   = "terraform-backend"
-  }
-}
-
-resource "aws_s3_bucket" "terraform_state" {
+resource "aws_s3_bucket" "terraform_state" { #create the bucket
   bucket        = local.state_bucket_name
   force_destroy = var.force_destroy_state_bucket
 }
 
-resource "aws_s3_bucket_public_access_block" "terraform_state" {
+resource "aws_s3_bucket_public_access_block" "terraform_state" { #configure security on that bucket
   bucket = aws_s3_bucket.terraform_state.id
 
   block_public_acls       = true
