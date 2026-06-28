@@ -25,3 +25,23 @@ module "network" {
   # Pass any environment-specific tags to the network resources.
   additional_tags = var.additional_tags
 }
+
+# Create the baseline security groups inside the development VPC.
+module "security_groups" {
+  # Reference the local reusable security groups module.
+  source = "../../../modules/aws/security-groups"
+
+  # Create all security groups inside the VPC returned by the network module.
+  vpc_id = module.network.vpc_id
+
+  # Pass project and environment values used for names and tags.
+  project     = var.project
+  environment = var.environment
+
+  # Allow approved IPv4 ranges to reach the future public ALB.
+  alb_ingress_cidrs = var.alb_ingress_cidrs
+
+  # Reuse development-specific tags.
+  additional_tags = var.additional_tags
+}
+
