@@ -57,3 +57,13 @@ variable "additional_tags" {
   type        = map(string)
   default     = {}
 }
+
+
+# Define which IPv4 ranges may reach the public Application Load Balancer.
+variable "alb_ingress_cidrs" {
+  description = "IPv4 CIDR blocks allowed to reach the public ALB on ports 80 and 443."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+
+

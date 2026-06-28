@@ -22,3 +22,23 @@ output "availability_zones" {
 output "nat_gateway_id" {
   value = module.network.nat_gateway_id
 }
+
+# Expose the future ALB security group ID.
+output "alb_security_group_id" {
+  value = module.security_groups.alb_security_group_id
+}
+
+# Expose the future EKS nodes security group ID.
+output "eks_nodes_security_group_id" {
+  value = module.security_groups.eks_nodes_security_group_id
+}
+
+# Expose the PostgreSQL security group ID.
+output "rds_security_group_id" {
+  value = module.security_groups.rds_security_group_id
+}
+
+# Expose the Redis security group ID.
+output "redis_security_group_id" {
+  value = module.security_groups.redis_security_group_id
+}
