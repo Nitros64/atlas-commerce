@@ -43,6 +43,20 @@ The default development value is:
 
 This is appropriate for a public application endpoint.
 
+## Current Egress Behavior
+
+AWS creates new security groups with a default outbound rule that allows all traffic.
+
+At this stage, Terraform does not manage explicit egress rules yet.
+
+Future phases will replace broad outbound access with explicit rules for the real architecture, such as:
+
+```text
+ALB -> EKS ingress targets
+EKS -> RDS :5432
+EKS -> Redis :6379
+EKS -> required AWS services
+```
 ## Future Security Flow
 
 ```text
