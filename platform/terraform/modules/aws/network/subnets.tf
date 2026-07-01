@@ -23,6 +23,8 @@ resource "aws_subnet" "public" {
 
       # Identify this subnet's intended network tier.
       Tier = "public"
+
+      "kubernetes.io/role/elb" = "1"
     }
   )
 }
@@ -52,6 +54,8 @@ resource "aws_subnet" "private" {
 
       # Identify this subnet's intended network tier.
       Tier = "private"
+
+      "kubernetes.io/role/elb" = "1"
     }
   )
 }
