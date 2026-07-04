@@ -16,6 +16,7 @@ permissions:
   contents: read
   checks: write
   security-events: write
+  id-token: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -29,4 +30,4 @@ jobs:
       service-name: Gateway Service
       service-path: services/gateway-service
       docker-image-name: gateway-service
-    secrets: inherit
+    #secrets: inherit

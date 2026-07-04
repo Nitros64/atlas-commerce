@@ -16,6 +16,7 @@ permissions:
   contents: read
   checks: write
   security-events: write
+  id-token: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -29,4 +30,4 @@ jobs:
       service-name: Shipping Service
       service-path: services/shipping-service
       docker-image-name: shipping-service
-    secrets: inherit
+    #secrets: inherit
