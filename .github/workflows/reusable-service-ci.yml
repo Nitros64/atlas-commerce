@@ -29,6 +29,7 @@ permissions:
   contents: read
   checks: write
   security-events: write
+  id-token: write
 
 jobs:
   build-test-and-push:
@@ -102,26 +103,52 @@ jobs:
           fi    
 
       # ==================== BUILD & PUSH ====================
-      - name: Log in to Docker Hub
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      # - name: Log in to Docker Hub
+      #   if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+      #   uses: docker/login-action@v3
+      #   with:
+      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
+      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and Push Docker Image
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+      # - name: Build and Push Docker Image
+      #   if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     context: ${{ inputs.service-path }}
+      #     file: ${{ inputs.service-path }}/Dockerfile
+      #     push: true
+      #     tags: |
+      #       ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.docker-image-name }}:${{ github.sha }}
+      #       ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.docker-image-name }}:latest
+      #     # cache-from: type=gha
+      #     # cache-to: type=gha,mode=max
+
+      # ==================== BUILD & PUSH TO AMAZON ECR ====================
+      - name: Configure AWS credentials through GitHub OIDC
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ECR_PUSH_ROLE_ARN }}
+          role-session-name: atlas-${{ inputs.docker-image-name }}-${{ github.run_id }}
+          allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
+
+      - name: Log in to Amazon ECR
+        id: login_ecr
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push Docker Image to Amazon ECR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: docker/build-push-action@v6
         with:
           context: ${{ inputs.service-path }}
           file: ${{ inputs.service-path }}/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.docker-image-name }}:${{ github.sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.docker-image-name }}:latest
-          # cache-from: type=gha
-          # cache-to: type=gha,mode=max
+            ${{ steps.login_ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_PREFIX }}/${{ inputs.docker-image-name }}:sha-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
 
+      # ==================== TESTING ====================
       - name: Test Report
         uses: dorny/test-reporter@v1
         if: always()

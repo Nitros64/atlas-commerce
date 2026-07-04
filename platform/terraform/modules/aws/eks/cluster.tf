@@ -10,7 +10,7 @@ resource "aws_eks_cluster" "main" {
   version = var.kubernetes_version
 
   # Terraform manages VPC CNI, CoreDNS, and kube-proxy as EKS add-ons.
-  bootstrap_self_managed_addons = false 
+  bootstrap_self_managed_addons = false
 
   # Enable only the control-plane logs requested by the environment.
   enabled_cluster_log_types = var.enabled_cluster_log_types
@@ -78,5 +78,5 @@ resource "aws_eks_cluster" "main" {
   upgrade_policy {
     support_type = "STANDARD"
   }
-  
+
 }
