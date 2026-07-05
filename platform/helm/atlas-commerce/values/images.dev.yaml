@@ -1,0 +1,73 @@
+# Immutable ECR image versions deployed in the development environment.
+
+auth:
+  deployment:
+    image:
+      repository: 529601496188.dkr.ecr.eu-central-1.amazonaws.com/atlas-commerce/auth-service
+      tag: sha-5ac9c124d866a8db6d8328ec4e306085d6a086e5-28712199468-1
+
+catalog:
+  deployment:
+    image:
+      repository: 529601496188.dkr.ecr.eu-central-1.amazonaws.com/atlas-commerce/catalog-service
+      tag: sha-5ac9c124d866a8db6d8328ec4e306085d6a086e5-28712199469-1
+
+cart:
+  deployment:
+    image:
+      repository: 529601496188.dkr.ecr.eu-central-1.amazonaws.com/atlas-commerce/cart-service
+      tag: sha-5ac9c124d866a8db6d8328ec4e306085d6a086e5-28712199463-1
+
+pricing:
+  deployment:
+    image:
+      repository: 529601496188.dkr.ecr.eu-central-1.amazonaws.com/atlas-commerce/pricing-service
+      tag: sha-5ac9c124d866a8db6d8328ec4e306085d6a086e5-28712199475-1
+
+coupon:
+  deployment:
+    image:
+      repository: 529601496188.dkr.ecr.eu-central-1.amazonaws.com/atlas-commerce/coupon-service
+      tag: sha-5ac9c124d866a8db6d8328ec4e306085d6a086e5-28712199459-1
+
+inventory:
+  deployment:
+    image:
+      repository: 529601496188.dkr.ecr.eu-central-1.amazonaws.com/atlas-commerce/inventory-service
+      tag: sha-5ac9c124d866a8db6d8328ec4e306085d6a086e5-28712199458-1
+
+payment:
+  deployment:
+    image:
+      repository: 529601496188.dkr.ecr.eu-central-1.amazonaws.com/atlas-commerce/payment-service
+      tag: sha-5ac9c124d866a8db6d8328ec4e306085d6a086e5-28712199449-1
+
+order:
+  deployment:
+    image:
+      repository: 529601496188.dkr.ecr.eu-central-1.amazonaws.com/atlas-commerce/order-service
+      tag: sha-5ac9c124d866a8db6d8328ec4e306085d6a086e5-28712199446-1
+
+shipping:
+  deployment:
+    image:
+      repository: 529601496188.dkr.ecr.eu-central-1.amazonaws.com/atlas-commerce/shipping-service
+      tag: sha-5ac9c124d866a8db6d8328ec4e306085d6a086e5-28712199461-1
+
+notification:
+  deployment:
+    image:
+      repository: 529601496188.dkr.ecr.eu-central-1.amazonaws.com/atlas-commerce/notification-service
+      tag: sha-5ac9c124d866a8db6d8328ec4e306085d6a086e5-28712199467-1
+
+audit:
+  deployment:
+    image:
+      repository: 529601496188.dkr.ecr.eu-central-1.amazonaws.com/atlas-commerce/audit-service
+      tag: sha-5ac9c124d866a8db6d8328ec4e306085d6a086e5-28712199457-1
+
+gateway:
+  deployment:
+    image:
+      repository: 529601496188.dkr.ecr.eu-central-1.amazonaws.com/atlas-commerce/api-gateway
+      tag: sha-63bb17df7890b8fa3308af0467eab60881ad5048-28741788197-1
