@@ -6,11 +6,13 @@ on:
     paths:
       - "services/gateway-service/**"
       - ".github/workflows/reusable-service-ci.yml"
+      - ".github/workflows/gateway-service-ci.yml"
   pull_request:
     branches: [master, main, develop]
     paths:
       - "services/gateway-service/**"
       - ".github/workflows/reusable-service-ci.yml"
+      - ".github/workflows/gateway-service-ci.yml"
 
 permissions:
   contents: read
@@ -29,5 +31,5 @@ jobs:
     with:
       service-name: Gateway Service
       service-path: services/gateway-service
-      docker-image-name: gateway-service
+      docker-image-name: api-gateway
     #secrets: inherit
