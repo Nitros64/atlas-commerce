@@ -42,3 +42,13 @@ output "rds_security_group_id" {
 output "redis_security_group_id" {
   value = module.security_groups.redis_security_group_id
 }
+
+output "platform_secret_arn" {
+  description = "ARN of the Atlas development platform secret."
+  value       = module.secrets_manager.secret_arns["platform"]
+}
+
+output "platform_secret_name" {
+  description = "Name of the Atlas development platform secret."
+  value       = module.secrets_manager.secret_names["platform"]
+}
