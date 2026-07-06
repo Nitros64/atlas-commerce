@@ -52,3 +52,9 @@ output "node_group_name" {
 output "node_group_arn" {
   value = aws_eks_node_group.default.arn
 }
+
+# Expose the IAM role assigned to the EBS CSI controller.
+output "ebs_csi_role_arn" {
+  description = "ARN of the IAM role used by the Amazon EBS CSI controller."
+  value       = try(aws_iam_role.ebs_csi[0].arn, null)
+}

@@ -65,3 +65,21 @@ resource "aws_eks_addon" "kube_proxy" {
     aws_eks_node_group.default
   ]
 }
+
+# Install the Amazon EBS CSI driver as an AWS-managed EKS add-on.
+resource "aws_eks_addon" "ebs_csi" {
+  count = var.enable_irsa ? 1 : 0
+
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "aws-ebs-csi-driver"
+
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "PRESERVE"
+
+  service_account_role_arn = aws_iam_role.ebs_csi[0].arn
+
+  depends_on = [
+    aws_eks_node_group.default,
+    aws_iam_role_policy_attachment.ebs_csi_policy,
+  ]
+}
