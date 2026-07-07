@@ -67,3 +67,18 @@ output "rds_postgresql_master_secret_arn" {
   description = "ARN of the RDS-managed master credentials secret."
   value       = module.rds_postgresql.master_user_secret_arn
 }
+
+output "redis_primary_endpoint" {
+  description = "Primary endpoint hostname for Atlas managed Redis."
+  value       = module.elasticache_redis.primary_endpoint_address
+}
+
+output "redis_reader_endpoint" {
+  description = "Reader endpoint hostname for future Redis replicas."
+  value       = module.elasticache_redis.reader_endpoint_address
+}
+
+output "redis_port" {
+  description = "Redis listener port."
+  value       = module.elasticache_redis.port
+}
