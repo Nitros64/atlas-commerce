@@ -52,3 +52,18 @@ output "platform_secret_name" {
   description = "Name of the Atlas development platform secret."
   value       = module.secrets_manager.secret_names["platform"]
 }
+
+output "rds_postgresql_address" {
+  description = "Private DNS hostname of the Atlas development PostgreSQL RDS instance."
+  value       = module.rds_postgresql.address
+}
+
+output "rds_postgresql_port" {
+  description = "PostgreSQL listener port."
+  value       = module.rds_postgresql.port
+}
+
+output "rds_postgresql_master_secret_arn" {
+  description = "ARN of the RDS-managed master credentials secret."
+  value       = module.rds_postgresql.master_user_secret_arn
+}
