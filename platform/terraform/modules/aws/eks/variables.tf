@@ -137,3 +137,27 @@ variable "additional_tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "enable_velero_irsa" {
+  description = "Whether to create the IAM role for Velero using IRSA."
+  type        = bool
+  default     = false
+}
+
+variable "velero_namespace" {
+  description = "Kubernetes namespace where Velero will run."
+  type        = string
+  default     = "velero"
+}
+
+variable "velero_service_account_name" {
+  description = "Kubernetes ServiceAccount name used by Velero."
+  type        = string
+  default     = "velero"
+}
+
+variable "velero_backup_bucket_arn" {
+  description = "S3 bucket ARN used by Velero to store backups."
+  type        = string
+  default     = null
+}

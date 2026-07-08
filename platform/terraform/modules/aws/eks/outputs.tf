@@ -68,3 +68,8 @@ output "external_secrets_role_arn" {
   description = "ARN of the IAM role used by External Secrets Operator."
   value       = try(aws_iam_role.external_secrets[0].arn, null)
 }
+
+output "velero_role_arn" {
+  description = "IAM role ARN used by Velero through IRSA."
+  value       = try(aws_iam_role.velero[0].arn, null)
+}

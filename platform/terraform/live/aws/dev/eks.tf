@@ -34,4 +34,7 @@ module "eks" {
   node_disk_size_gib = var.eks_node_disk_size_gib
 
   additional_tags = var.additional_tags
+
+  enable_velero_irsa       = true
+  velero_backup_bucket_arn = module.velero_backup.bucket_arn
 }
