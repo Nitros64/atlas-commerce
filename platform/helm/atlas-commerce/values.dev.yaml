@@ -1,0 +1,16 @@
+# AWS development uses managed RDS and ElastiCache.
+# Secrets are synchronized by External Secrets Operator.
+
+secretManagement:
+  createByHelm: false
+
+# These names are references only; no secret values live in Git.
+secrets:
+  jwt:
+    name: jwt-secret  
+
+postgres:
+  enabled: false
+
+redis:
+  enabled: false

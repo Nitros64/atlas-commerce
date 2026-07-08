@@ -50,3 +50,6 @@ ingress:
   gatewayServiceName: gateway-service
   gatewayServicePort: 80
   annotations: {} 
+
+secretManagement:
+  createByHelm: true  

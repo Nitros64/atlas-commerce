@@ -52,3 +52,24 @@ output "node_group_name" {
 output "node_group_arn" {
   value = aws_eks_node_group.default.arn
 }
+
+# Expose the IAM role assigned to the EBS CSI controller.
+output "ebs_csi_role_arn" {
+  description = "ARN of the IAM role used by the Amazon EBS CSI controller."
+  value       = try(aws_iam_role.ebs_csi[0].arn, null)
+}
+
+output "aws_load_balancer_controller_role_arn" {
+  description = "ARN of the IAM role used by AWS Load Balancer Controller."
+  value       = try(aws_iam_role.aws_load_balancer_controller[0].arn, null)
+}
+
+output "external_secrets_role_arn" {
+  description = "ARN of the IAM role used by External Secrets Operator."
+  value       = try(aws_iam_role.external_secrets[0].arn, null)
+}
+
+output "velero_role_arn" {
+  description = "IAM role ARN used by Velero through IRSA."
+  value       = try(aws_iam_role.velero[0].arn, null)
+}

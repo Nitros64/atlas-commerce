@@ -42,3 +42,43 @@ output "rds_security_group_id" {
 output "redis_security_group_id" {
   value = module.security_groups.redis_security_group_id
 }
+
+output "platform_secret_arn" {
+  description = "ARN of the Atlas development platform secret."
+  value       = module.secrets_manager.secret_arns["platform"]
+}
+
+output "platform_secret_name" {
+  description = "Name of the Atlas development platform secret."
+  value       = module.secrets_manager.secret_names["platform"]
+}
+
+output "rds_postgresql_address" {
+  description = "Private DNS hostname of the Atlas development PostgreSQL RDS instance."
+  value       = module.rds_postgresql.address
+}
+
+output "rds_postgresql_port" {
+  description = "PostgreSQL listener port."
+  value       = module.rds_postgresql.port
+}
+
+output "rds_postgresql_master_secret_arn" {
+  description = "ARN of the RDS-managed master credentials secret."
+  value       = module.rds_postgresql.master_user_secret_arn
+}
+
+output "redis_primary_endpoint" {
+  description = "Primary endpoint hostname for Atlas managed Redis."
+  value       = module.elasticache_redis.primary_endpoint_address
+}
+
+output "redis_reader_endpoint" {
+  description = "Reader endpoint hostname for future Redis replicas."
+  value       = module.elasticache_redis.reader_endpoint_address
+}
+
+output "redis_port" {
+  description = "Redis listener port."
+  value       = module.elasticache_redis.port
+}
