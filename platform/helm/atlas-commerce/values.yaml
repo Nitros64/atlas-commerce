@@ -53,3 +53,22 @@ ingress:
 
 secretManagement:
   createByHelm: true  
+
+  externalSecrets:
+    enabled: false
+    refreshInterval: 1h
+
+    secretStore:
+      enabled: false
+      name: aws-secrets-manager
+      kind: ClusterSecretStore
+      service: SecretsManager
+      region: eu-central-1
+      serviceAccountName: external-secrets
+      serviceAccountNamespace: external-secrets
+
+    secrets:
+      jwt:
+        enabled: true
+        remoteKey: atlas/dev/jwt
+        property: SECURITY_JWT_SECRET

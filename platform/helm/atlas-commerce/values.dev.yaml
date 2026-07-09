@@ -4,6 +4,25 @@
 secretManagement:
   createByHelm: false
 
+  externalSecrets:
+    enabled: true
+    refreshInterval: 1h
+
+    secretStore:
+      enabled: true
+      name: aws-secrets-manager
+      kind: ClusterSecretStore
+      service: SecretsManager
+      region: eu-central-1
+      serviceAccountName: external-secrets
+      serviceAccountNamespace: external-secrets
+
+    secrets:
+      jwt:
+        enabled: true
+        remoteKey: atlas-commerce/dev/platform
+        property: SECURITY_JWT_SECRET
+
 # These names are references only; no secret values live in Git.
 secrets:
   jwt:
