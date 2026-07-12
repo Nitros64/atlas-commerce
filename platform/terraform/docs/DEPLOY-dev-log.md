@@ -203,9 +203,19 @@ Si en el futuro el costo de NAT Gateway en `dev` (~$32/mes) se vuelve una preocu
 
 ---
 
-## 4. Siguiente fase (no iniciada)
+## 4. Destroy del ambiente
 
-Fuera del alcance de Terraform, según el README raíz del repo ("Terraform aprovisiona infra; Helm despliega las apps"):
+Tras validar el despliegue y aplicar el hardening de la Sección 3, el ambiente `dev` completo se destruyó intencionalmente el mismo día (no fue un fallo): `terraform destroy` sobre `live/aws/dev`, confirmado con `terraform plan -destroy` antes de aplicar (60 recursos a eliminar, 0 a mantener).
+
+**Resultado:** `Apply complete! Resources: 0 added, 0 changed, 60 destroyed.` Sin errores. Orden de destrucción resuelto correctamente por Terraform en sentido inverso a la creación (policies/configs superficiales → RDS/Redis/node group en paralelo → EKS cluster → subnets/VPC). Tiempos notables: RDS 1m54s, node group 2m20s, Redis 4m21s, EKS cluster 3m4s. `terraform state list` confirmado vacío después.
+
+**Costo estimado del ciclo completo** (creación + ~20 min a full capacidad + destroy, precios de lista, no factura real — Cost Explorer no estaba habilitado en la cuenta durante el despliegue): por debajo de $1 USD, dominado por las ~4 horas que el control plane de EKS estuvo activo ($0.10/hora es un cargo fijo independiente de si hay nodos).
+
+---
+
+## 5. Siguiente fase (no iniciada)
+
+El ambiente `dev` fue destruido (§4) tras esta validación — lo siguiente aplica para cuando se vuelva a desplegar. Fuera del alcance de Terraform, según el README raíz del repo ("Terraform aprovisiona infra; Helm despliega las apps"):
 
 - Conectar `kubectl` al cluster: `aws eks update-kubeconfig --name atlas-commerce-dev --region eu-central-1 --profile atlas-commerce`.
 - Desplegar Helm charts de las aplicaciones.
