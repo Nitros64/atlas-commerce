@@ -1,5 +1,5 @@
 # Reuse the S3 bucket created by the bootstrap phase.
-bucket = "atlas-commerce-shared-tfstate-529601496188-eu-central-1"
+bucket = "atlas-commerce-shared-tfstate-724772086459-eu-central-1"
 
 # Keep development state isolated from bootstrap, staging, and production.
 key = "atlas-commerce/dev/terraform.tfstate"
