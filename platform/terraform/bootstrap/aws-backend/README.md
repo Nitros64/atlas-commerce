@@ -9,11 +9,23 @@ Resources:
 - S3 bucket encryption
 - S3 public access block
 - S3 HTTPS-only bucket policy
-- DynamoDB table for state locking compatibility
+
+State locking uses the native S3 lockfile (`use_lockfile = true`, Terraform >= 1.10). No DynamoDB table is created — it would be unused dead weight alongside the S3 lockfile.
 
 Important:
 
 This bootstrap folder intentionally uses local Terraform state because it creates the remote backend itself.
+
+## Generating backend.hcl for a live environment
+
+Do not hand-type the state bucket name into a new `live/aws/<env>/backend.hcl` — copying it from memory is how `dev`'s backend once ended up pointing at a bucket in the wrong AWS account. Generate it from this module's output instead:
+
+```bash
+cd platform/terraform/bootstrap/aws-backend
+terraform output -raw backend_config_template | sed 's#<ENV>#dev#' > ../../live/aws/dev/backend.hcl
+```
+
+Replace `dev` in both places with the target environment name.
 
 ## Usage
 

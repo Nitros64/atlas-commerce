@@ -10,7 +10,7 @@ Terraform root module for the Atlas Commerce development environment in AWS Fran
 * One Internet Gateway
 * One public route table with Internet access
 * One private route table per Availability Zone
-* No NAT Gateway by default
+* NAT Gateway enabled by default — the EKS node group runs in private subnets and needs it for outbound access (see Cost Safety below)
 
 ## State Backend
 
@@ -36,7 +36,7 @@ Private Subnets
 
 Public subnets have a default route to the Internet Gateway.
 
-Private subnets have no outbound Internet route while `enable_nat_gateway = false`.
+Private subnets have no outbound Internet route if `enable_nat_gateway` is set to `false`. Do not disable it while the EKS node group exists — the node group has no other egress path and will hang during `apply` instead of failing fast.
 
 ## Usage
 
@@ -67,12 +67,12 @@ terraform plan
 
 ## Cost Safety
 
-NAT Gateway is disabled by default because it has hourly and data-processing costs.
+NAT Gateway is enabled by default (~$0.045/hour plus data processing) because the EKS node group runs in private subnets and requires outbound Internet access to pull kubelet/CNI images and register with the cluster. Disabling it will hang `terraform apply` on the node group for 15-30 minutes before failing, instead of failing fast.
 
-Enable it only when private resources require outbound Internet access:
+Only disable it in environments with no EKS node group, or once an alternative egress path (e.g. VPC endpoints) is in place:
 
 ```hcl
-enable_nat_gateway = true
+enable_nat_gateway = false
 ```
 
 ## Module Used

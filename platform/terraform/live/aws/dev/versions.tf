@@ -8,5 +8,12 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+
+    # Used to auto-detect the operator's public IP for the EKS endpoint
+    # allowlist (see eks_cluster_endpoint_public_access_cidrs in locals.tf).
+    http = {
+      source  = "hashicorp/http"
+      version = "~> 3.4"
+    }
   }
 }

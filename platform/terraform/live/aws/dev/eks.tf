@@ -17,7 +17,7 @@ module "eks" {
   # Allow local kubectl access, restricted to your public IP only.
   cluster_endpoint_public_access = true
 
-  cluster_endpoint_public_access_cidrs = var.eks_cluster_endpoint_public_access_cidrs
+  cluster_endpoint_public_access_cidrs = local.eks_cluster_endpoint_public_access_cidrs
 
   # Keep CloudWatch control-plane logs disabled for now to avoid extra cost.
   enabled_cluster_log_types = []

@@ -13,11 +13,19 @@ output "aws_region" {
   value       = var.aws_region
 }
 
-output "backend_config_example_dev" {
-  description = "Example backend configuration for live/aws/dev/backend.hcl."
+output "backend_config_template" {
+  description = <<-EOT
+    Backend config body for any live/aws/<env>/backend.hcl. The bucket/region
+    values are read from this state, not retyped by hand, to avoid pointing
+    a new environment at the wrong AWS account's state bucket.
+
+    Generate a real backend.hcl without manual transcription, e.g. for dev:
+      terraform output -raw backend_config_template \
+        | sed 's#<ENV>#dev#' > ../../live/aws/dev/backend.hcl
+  EOT
   value       = <<EOT
 bucket       = "${aws_s3_bucket.terraform_state.bucket}"
-key          = "atlas-commerce/dev/terraform.tfstate"
+key          = "atlas-commerce/<ENV>/terraform.tfstate"
 region       = "${var.aws_region}"
 encrypt      = true
 use_lockfile = true
