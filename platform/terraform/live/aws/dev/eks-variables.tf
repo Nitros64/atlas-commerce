@@ -8,7 +8,15 @@ variable "eks_kubernetes_version" {
 }
 
 variable "eks_cluster_endpoint_public_access_cidrs" {
-  type = list(string)
+  description = <<-EOT
+    CIDRs allowed to reach the public EKS API endpoint. Leave empty (the
+    default) to auto-detect the operator's current public IP via
+    checkip.amazonaws.com at plan/apply time — see locals.tf. Set explicitly
+    to pin a fixed CIDR (e.g. an office IP or VPN range) instead of relying
+    on auto-detection.
+  EOT
+  type        = list(string)
+  default     = []
 }
 
 variable "eks_node_instance_types" {
