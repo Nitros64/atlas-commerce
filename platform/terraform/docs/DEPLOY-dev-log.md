@@ -4,45 +4,72 @@
 > **Cuenta AWS:** 724772086459 (perfil CLI `atlas-commerce`, usuario IAM `terraform-admin`)
 > **Región:** eu-central-1 (Frankfurt)
 
-Registro del primer despliegue end-to-end del ambiente `dev`: qué funcionó a la primera, qué falló, y qué cambiar en el código para que la próxima vez (este ambiente u otro nuevo, ej. `staging`) funcione sin intervención manual.
+Registro cronológico del primer despliegue end-to-end del ambiente `dev`, en el orden real en que ocurrieron los hechos: bootstrap del backend remoto → `apply` del ambiente `dev` → hardening posterior contra valores hardcodeados. Cada hallazgo se marca **✅ corregido** en el momento en que se diagnosticó y arregló, o **🔲 pendiente** si quedó abierto.
 
 ---
 
-## 1. Qué funcionó bien a la primera
+## 1. Bootstrap del backend remoto (`bootstrap/aws-backend`)
 
-- **Bootstrap del backend remoto** (`bootstrap/aws-backend`): aplicó sin errores tras el fix de `backend.tf` (ver §2.1). Bucket S3 + seguridad (versioning, encryption, public access block, bucket policy) + lockfile nativo S3, todo correcto al primer intento.
-- **Orden de dependencias del `plan`**: VPC → security groups → EKS control plane / RDS / Redis en paralelo → reglas de ingreso cruzadas (RDS/Redis from EKS) → OIDC provider → roles IRSA → addons. Terraform resolvió el grafo de dependencias correctamente, sin necesidad de `-target` ni ajustes manuales de orden.
-- **Tiempos de creación de los recursos "pesados"** (sin contar el problema de red):
-  - Redis (`aws_elasticache_replication_group`): 5m51s
-  - RDS PostgreSQL (`aws_db_instance`): 6m30s
-  - EKS control plane (`aws_eks_cluster`): 7m24s
-- **Roles IRSA y policy attachments** (Velero, VPC CNI, EBS CSI, ALB Controller, External Secrets): todos se crearon en 0-1s cada uno, sin fricción, en cuanto el OIDC provider estuvo listo.
-- **Variables requeridas sin default** (`eks_kubernetes_version`, `eks_cluster_endpoint_public_access_cidrs`, `eks_node_instance_types`, `rds_engine_version`, `redis_engine_version`): el `plan` falla de forma clara y explícita pidiéndolas, no hay sorpresas a mitad de apply.
+### 1.1 🔴 `backend.tf` declaraba un backend S3 parcial — **✅ corregido**
 
----
-
-## 2. Qué falló / qué no funcionó a la primera
-
-### 2.1 🔴 Bug bloqueante — `bootstrap/aws-backend/backend.tf` declaraba un backend S3 parcial
-
-**Síntoma:** `terraform init` en `bootstrap/aws-backend` fallaba con:
+**Síntoma:** `terraform init` fallaba con:
 ```
 Error: Error asking for input to configure backend "s3": bucket: EOF
 ```
 
-**Causa:** `backend.tf` tenía `terraform { backend "s3" {} }`, contradiciendo el propio README del folder, que documenta explícitamente que el bootstrap debe usar **estado local** (no puede depender de un backend que él mismo crea — problema chicken-and-egg).
+**Causa:** `backend.tf` tenía `terraform { backend "s3" {} }`, contradiciendo el propio README del folder, que documenta que el bootstrap debe usar **estado local** (no puede depender de un backend que él mismo crea — problema chicken-and-egg).
 
-**Fix aplicado:** se quitó el bloque `backend "s3" {}`, dejando `terraform {}` vacío con comentario explicativo.
+**Fix aplicado en el momento:** se quitó el bloque `backend "s3" {}`, dejando `terraform {}` vacío con comentario explicativo. `terraform init` funcionó de inmediato después.
 
-**Ya corregido en este despliegue** — no debería repetirse.
+### 1.2 🔴 Tabla DynamoDB de locking creada pero nunca usada — **✅ corregido**
 
-### 2.2 🔴 Bloqueante — Node group de EKS colgado indefinidamente por falta de NAT Gateway
+**Diagnóstico:** `main.tf` creaba `aws_dynamodb_table.terraform_locks`, pero el locking real ya lo hacía el S3 native lockfile (`use_lockfile = true`, Terraform ≥1.10 — confirmado en `versions.tf`). La tabla era un recurso huérfano: se aprovisionaba y mantenía sin que nada la consumiera.
 
-**Síntoma:** `module.eks.aws_eks_node_group.default` se quedó en `Still creating...` más de 16 minutos sin completar ni fallar explícitamente (el timeout por defecto de este recurso es más largo, ~20-30 min antes de que Terraform reporte error).
+**Fix aplicado en el momento:**
+- Se eliminó el recurso `aws_dynamodb_table.terraform_locks` de `main.tf`, junto con `local.lock_table_name`, las variables `lock_table_name` y `enable_lock_table_deletion_protection`, y el output `terraform_lock_table_name`.
+- Se aplicó `terraform apply` sobre el bootstrap para destruir la tabla ya creada en AWS (`0 added, 0 changed, 1 destroyed`).
+- Se corrigió `backend_config_example_dev` (ver §1.4) para dejar de sugerir un `dynamodb_table` que ya no existe.
 
-**Causa raíz:** `terraform.tfvars` tenía `enable_nat_gateway = false` (para evitar el costo de NAT en dev). Las subnets **privadas**, donde el node group lanza las instancias EC2, solo tenían la ruta local (`10.20.0.0/16`) — **sin ruta `0.0.0.0/0` hacia ningún NAT Gateway ni VPC Endpoint**. Los nodos EC2 no podían descargar las imágenes de kubelet/CNI ni registrarse contra el cluster, así que el Auto Scaling Group nunca llegó a reportar instancias sanas.
+### 1.3 🟡 `backend.hcl` huérfano dentro de `bootstrap/aws-backend/` — **✅ corregido**
 
-**Diagnóstico:**
+**Diagnóstico:** existía un `bootstrap/aws-backend/backend.hcl` sin ningún uso real (el bootstrap usa estado local, confirmado por `backend.tf` §1.1) y con datos obsoletos: apuntaba a la cuenta AWS `529601496188`, que no es la del usuario.
+
+**Fix aplicado en el momento:** archivo eliminado — no tenía ninguna función.
+
+### 1.4 🔴 Riesgo de transcripción manual del bucket de estado hacia cada `live/aws/<env>/backend.hcl` — **✅ corregido**
+
+**Diagnóstico (posterior al despliegue de `dev`, ver §3):** el `backend.hcl` original de `live/aws/dev` apuntaba a la cuenta AWS `529601496188` (ajena), no a la cuenta real del usuario (`724772086459`). La causa era que ese archivo se había escrito a mano en algún momento anterior, sin generarlo desde el output real del bootstrap — es exactamente la clase de error que un valor hardcodeado facilita.
+
+**Fix aplicado:** el output `backend_config_example_dev` (fijo a `dev`) se reemplazó por `backend_config_template`, parametrizable por ambiente vía `sed`, y se documentó en el README del bootstrap el comando exacto para generar cualquier `backend.hcl` sin transcripción manual:
+```bash
+cd platform/terraform/bootstrap/aws-backend
+terraform output -raw backend_config_template | sed 's#<ENV>#dev#' > ../../live/aws/dev/backend.hcl
+```
+Verificado: el archivo generado con este comando coincide con los valores (`bucket`, `key`, `region`) ya aplicados en `dev`.
+
+**Limitación que no se puede eliminar:** un bloque `backend "s3" {}` de Terraform no puede interpolar variables ni leer outputs de otro state (limitación del propio partial backend config). El account ID seguirá apareciendo como texto literal dentro de `backend.hcl` — lo que se elimina aquí es el riesgo de **transcribirlo mal a mano**, no el hardcode en sí.
+
+---
+
+## 2. Despliegue de `live/aws/dev`
+
+### 2.1 Qué funcionó bien a la primera
+
+- **Orden de dependencias del `plan`**: VPC → security groups → EKS control plane / RDS / Redis en paralelo → reglas de ingreso cruzadas (RDS/Redis from EKS) → OIDC provider → roles IRSA → addons. Terraform resolvió el grafo correctamente, sin `-target` ni ajustes manuales.
+- **Tiempos de creación de los recursos "pesados"** (sin contar el problema de red de §2.2):
+  - Redis (`aws_elasticache_replication_group`): 5m51s
+  - RDS PostgreSQL (`aws_db_instance`): 6m30s
+  - EKS control plane (`aws_eks_cluster`): 7m24s
+- **Roles IRSA y policy attachments** (Velero, VPC CNI, EBS CSI, ALB Controller, External Secrets): todos se crearon en 0-1s cada uno, sin fricción, en cuanto el OIDC provider estuvo listo.
+- **Variables requeridas sin default** (`eks_kubernetes_version`, `eks_cluster_endpoint_public_access_cidrs` en ese momento, `eks_node_instance_types`, `rds_engine_version`, `redis_engine_version`): el `plan` falló de forma clara y explícita pidiéndolas, sin sorpresas a mitad de `apply`.
+
+### 2.2 🔴 Node group de EKS colgado indefinidamente por falta de NAT Gateway — **✅ corregido**
+
+**Síntoma:** `module.eks.aws_eks_node_group.default` se quedó en `Still creating...` más de 16 minutos sin completar ni fallar explícitamente.
+
+**Causa raíz:** `terraform.tfvars` tenía `enable_nat_gateway = false` (para evitar el costo de NAT en dev). Las subnets **privadas**, donde el node group lanza las instancias EC2, solo tenían la ruta local (`10.20.0.0/16`) — sin ruta `0.0.0.0/0` hacia ningún NAT Gateway ni VPC Endpoint. Los nodos EC2 no podían descargar las imágenes de kubelet/CNI ni registrarse contra el cluster.
+
+**Diagnóstico en el momento:**
 ```bash
 aws eks describe-nodegroup --cluster-name atlas-commerce-dev --nodegroup-name default \
   --query 'nodegroup.resources.autoScalingGroups[0].name'
@@ -55,93 +82,43 @@ aws ec2 describe-route-tables --filters "Name=tag:Project,Values=atlas-commerce"
 # → la route table de subnets privadas solo tiene la ruta local, sin 0.0.0.0/0
 ```
 
-**Acción tomada:**
+**Acción tomada en el momento:**
 1. Se interrumpió el `apply` en curso.
-2. Quedó un **lockfile S3 huérfano** (`terraform.tfstate.tflock`) — se liberó con `terraform force-unlock -force <lock-id>` (el lock era legítimo, del propio proceso interrumpido).
-3. Quedó un **node group huérfano en AWS** (fuera del state de Terraform, en `CREATING`, sin instancias EC2 reales) — se eliminó manualmente con `aws eks delete-nodegroup` antes de re-aplicar, para evitar un conflicto "ya existe" en el próximo `apply`.
+2. Quedó un **lockfile S3 huérfano** (`terraform.tfstate.tflock`) — se liberó con `terraform force-unlock -force <lock-id>` (lock legítimo del propio proceso interrumpido).
+3. Quedó un **node group huérfano en AWS** (fuera del state de Terraform, en `CREATING`, sin instancias EC2 reales) — se eliminó manualmente con `aws eks delete-nodegroup` antes de re-aplicar, para evitar un conflicto "ya existe".
 4. Se cambió `enable_nat_gateway = false` → `true` en `terraform.tfvars`.
-5. Pendiente: re-`plan` + re-`apply` con NAT habilitado.
+5. Se re-`plan`+`apply`: NAT Gateway, EIP y rutas privadas creadas; el node group completó esta vez en **2m44s** (vs. >16 min colgado sin red), confirmando el diagnóstico.
 
-**Costo del fix:** NAT Gateway ≈ $0.045/hora (~$32/mes) + procesamiento de datos. Aceptado como necesario — no es opcional si el node group vive en subnets privadas.
+**Fix estructural aplicado después (mismo día, ver §3):** el *default* de `enable_nat_gateway` en `variables.tf` también se cambió de `false` a `true`, para que cualquier ambiente nuevo creado desde este mismo código no repita el mismo colgado por partir del mismo default inseguro.
 
-**Resultado tras el fix:** con NAT Gateway habilitado, el node group completó en **2m44s** (vs. >16 min colgado sin red) — confirma que el diagnóstico fue correcto.
+**Costo del fix:** NAT Gateway ≈ $0.045/hora (~$32/mes) + procesamiento de datos. Necesario, no opcional, mientras el node group EKS viva en subnets privadas sin otra ruta de salida.
 
-### 2.3 🔴 Bloqueante — ARN incorrecto para la política gestionada de EBS CSI driver
+### 2.3 🔴 ARN incorrecto para la política gestionada de EBS CSI driver — **✅ corregido**
 
-**Síntoma:** tras resolver el problema de NAT, el `apply` avanzó hasta crear el node group y los addons `coredns`/`kube-proxy`, pero falló en el addon `ebs_csi`:
+**Síntoma:** tras resolver NAT, el `apply` avanzó hasta crear el node group y los addons `coredns`/`kube-proxy`, pero falló en el addon `ebs_csi`:
 ```
 Error: attaching IAM Policy (arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicyV2)
 to IAM Role (atlas-commerce-dev-ebs-csi-role): operation error IAM: AttachRolePolicy,
 https response error StatusCode: 404, NoSuchEntity: Policy ... does not exist or is not attachable.
 ```
 
-**Causa raíz:** `modules/aws/eks/ebs-csi.tf` línea 62 usaba un **path de ARN incorrecto**:
-```hcl
-policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicyV2"   # ❌ no existe
-```
-La política gestionada por AWS `AmazonEBSCSIDriverPolicyV2` sí existe, pero vive en el path raíz `/policy/`, no en `/policy/service-role/` (a diferencia de la versión anterior `AmazonEBSCSIDriverPolicy`, sin `V2`, que sí usa `service-role/`). Fácil de confundir porque ambas variantes conviven en AWS con paths distintos.
+**Causa raíz:** `modules/aws/eks/ebs-csi.tf` usaba un path de ARN incorrecto. La política `AmazonEBSCSIDriverPolicyV2` vive en el path raíz `/policy/`, no en `/policy/service-role/` (a diferencia de la versión anterior `AmazonEBSCSIDriverPolicy`, sin `V2`, que sí usa `service-role/`). Fácil de confundir porque ambas variantes conviven en AWS con paths distintos.
 
-**Diagnóstico:**
+**Diagnóstico en el momento:**
 ```bash
 aws iam list-policies --scope AWS --query "Policies[?contains(PolicyName, 'EBSCSI')].{Name:PolicyName,Arn:Arn}"
 # → arn:aws:iam::aws:policy/AmazonEBSCSIDriverPolicyV2   (sin service-role/)
 ```
 
-**Fix aplicado:**
-```hcl
-policy_arn = "arn:aws:iam::aws:policy/AmazonEBSCSIDriverPolicyV2"   # ✅ correcto
-```
+**Fix inmediato aplicado en el momento:** se corrigió el path a mano y se re-aplicó (`2 added`: el policy attachment y el addon `ebs_csi`). Apply completo: **74 recursos en el state, sin errores.**
 
-**Ya corregido en `modules/aws/eks/ebs-csi.tf`** — este bug se repetiría en cualquier ambiente nuevo (`staging`, `prod`) que use este módulo hasta este commit.
+**Fix estructural aplicado después (mismo día, ver §3):** en vez de dejar el ARN corregido "a mano" (que puede volver a romperse con la próxima política que alguien agregue), se reemplazaron los 6 ARNs de políticas AWS-managed hardcodeados en el módulo EKS (`iam.tf`, `irsa.tf`, `ebs-csi.tf`) por `data "aws_iam_policy"` — Terraform resuelve el ARN real buscando por **nombre**, eliminando la necesidad de adivinar el path. Verificado con `terraform plan` contra el ambiente ya desplegado: `No changes` — el ARN resuelto es idéntico al ya aplicado.
 
-**Nota operativa sobre el diagnóstico de esta sesión:** el `apply` se ejecutó con `terraform apply tfplan 2>&1 | tee log.txt` sin `set -o pipefail`, así que el código de salida del comando fue el de `tee` (0) y no el de `terraform apply` (el que realmente falló). Esto casi hace pasar el error desapercibido — el monitor automático que vigilaba el log por el string `Error:` fue lo que lo detectó, no el exit code. **Recomendación:** cualquier script de CI/CD que envuelva `terraform apply` en un pipe debe usar `set -o pipefail` (bash) para que el exit code refleje el fallo real de Terraform.
+**Nota operativa:** el `apply` se había ejecutado como `terraform apply tfplan 2>&1 | tee log.txt` sin `set -o pipefail`, así que el exit code del comando fue el de `tee` (0), no el de `terraform apply` (el que realmente falló). El error se detectó por un monitor de log en paralelo, no por el exit code — casi pasa desapercibido. **Pendiente 🔲:** documentar/aplicar `set -o pipefail` en cualquier script o pipeline que envuelva `terraform apply`.
 
----
+### 2.4 Estado al cierre del despliegue
 
-## 3. Recomendaciones de cambios en el código Terraform
-
-### 3.1 🔴 Alta — `enable_nat_gateway = false` no es un default viable si hay EKS con node groups en subnets privadas
-
-El módulo de red permite deshabilitar NAT, pero el módulo EKS asume subnets privadas para los nodos. Esta combinación **siempre** va a colgar el `apply` la primera vez que alguien la use, exactamente como pasó aquí. Dos opciones, a elegir una:
-
-- **Opción A (recomendada):** cambiar el default de `enable_nat_gateway` a `true` en `variables.tf` de `live/aws/dev` (y de cualquier otro `live/aws/<env>` que use EKS). Dev cuesta más, pero evita este bloqueo sorpresa a cualquiera que despliegue desde cero.
-- **Opción B:** si se quiere mantener NAT deshabilitado por defecto para ahorrar costo, añadir una **validación de Terraform** (`variable "enable_nat_gateway" { validation { ... } }` o un `check` block) que falle el `plan` —no el `apply` a los 16 minutos— si `enable_nat_gateway = false` y el node group EKS está configurado para subnets privadas. Fallar rápido en `plan` es mucho mejor que colgarse en `apply`.
-
-### 3.2 🟠 Media — Sin alternativa de VPC Endpoints documentada
-
-Si el objetivo real es ahorrar el costo de NAT en dev, una alternativa más barata (aunque más compleja de configurar) es usar VPC Endpoints de tipo Gateway/Interface para `s3`, `ecr.api`, `ecr.dkr`, `eks`, `logs`, en vez de NAT completo. No está implementado ni documentado hoy. Si el costo de NAT en dev es una preocupación real del equipo, vale la pena evaluarlo como Fase futura del roadmap — pero no como default silencioso, porque no cubre el 100% de lo que un nodo pueda necesitar (cualquier salida a internet genérica seguiría fallando).
-
-### 3.3 🟡 Baja — Falta guardarraíl para procesos `apply` interrumpidos
-
-Este despliegue dejó un lockfile S3 huérfano y un node group huérfano en AWS al interrumpir el `apply`. Ninguno de los dos es un bug de Terraform (es comportamiento esperado al matar el proceso a mitad de una operación), pero vale la pena documentar en el README de `live/aws/<env>` el procedimiento de recuperación:
-```bash
-# 1. Liberar el lock si quedó huérfano tras interrumpir un apply:
-terraform force-unlock -force <lock-id>   # el ID sale del propio mensaje de error o del archivo .tflock en S3
-
-# 2. Revisar si el recurso que se estaba creando quedó huérfano en AWS
-#    (fuera del state, porque Terraform no llegó a registrarlo):
-aws eks list-nodegroups --cluster-name <cluster>
-# si aparece uno que no está en `terraform state list`, eliminarlo manualmente
-# antes de re-aplicar para evitar un error de "ya existe".
-```
-
-### 3.5 🟡 Baja — Falta `set -o pipefail` en cualquier automatización futura de `apply`
-
-Ver nota al final de §2.3. Si en el futuro se envuelve `terraform apply`/`plan` en un pipe (CI/CD, scripts locales), asegurar que el exit code no quede enmascarado por el último comando del pipe (`tee`, `grep`, etc.).
-
-### 3.6 🟢 Ya resuelto en este mismo trabajo de sesión (no repetir)
-
-- DynamoDB lock table huérfana (no usada por el locking real, que es el S3 native lockfile) — eliminada del código y de AWS. Ver commits de `bootstrap/aws-backend/main.tf`, `locals.tf`, `variables.tf`, `outputs.tf`.
-- `bootstrap/aws-backend/backend.hcl` huérfano y con datos de una cuenta AWS ajena — eliminado (no tenía uso real, el bootstrap usa estado local a propósito).
-- Bug bloqueante `backend.tf` del bootstrap con backend S3 parcial (§2.1).
-- Node group de EKS colgado por falta de NAT Gateway (§2.2) — `enable_nat_gateway = true` ya aplicado en `terraform.tfvars` de `dev`.
-- ARN incorrecto de la política EBS CSI driver (§2.3) — corregido en `modules/aws/eks/ebs-csi.tf`.
-
----
-
-## 4. Estado al cierre — despliegue completo y exitoso
-
-**`terraform apply` finalizado sin errores.** 74 recursos en el state de `live/aws/dev`.
+**`terraform apply` finalizado sin errores.** 74 recursos en el state de `live/aws/dev`. Confirmado con `terraform plan` posterior: `No changes. Your infrastructure matches the configuration.`
 
 | Componente | Estado |
 |---|---|
@@ -162,4 +139,75 @@ Ver nota al final de §2.3. Si en el futuro se envuelve `terraform apply`/`plan`
 - `redis_primary_endpoint`: `master.atlas-commerce-dev-redis.yxbmzd.euc1.cache.amazonaws.com`
 - `platform_secret_arn`: `arn:aws:secretsmanager:eu-central-1:724772086459:secret:atlas-commerce/dev/platform-Tdz7fs`
 
-**Siguiente fase (no iniciada en esta sesión):** conectar `kubectl` al cluster (`aws eks update-kubeconfig`), desplegar Helm charts de las apps (fuera del alcance de Terraform, según el propio README raíz: "Terraform aprovisiona infra; Helm despliega las apps"), configurar ALB Controller y External Secrets Operator dentro del cluster usando los roles IRSA ya creados.
+---
+
+## 3. Hardening posterior contra valores hardcodeados
+
+Con `dev` ya desplegado y funcional, se revisó el código en busca de valores escritos a mano que no sobrevivirían a un segundo despliegue (otra cuenta AWS, otra máquina, otro ambiente) sin edición manual.
+
+### 3.1 🔴 6 ARNs de políticas AWS-managed hardcodeados en el módulo EKS — **✅ corregido**
+
+Ver detalle en §2.3. `modules/aws/eks/iam.tf`, `irsa.tf`, `ebs-csi.tf`: los 6 `policy_arn = "arn:aws:iam::aws:policy/..."` se reemplazaron por `data "aws_iam_policy" { name = "..." }` + `.arn`. Esto es lo que el bug de §2.3 realmente era: el path exacto de una política AWS-managed (`service-role/` o raíz) no es adivinable desde el nombre solo, y resolverlo por nombre elimina la clase de error completa, no solo la instancia que ya falló.
+
+### 3.2 🔴 Bucket de estado hardcodeado a mano en cada `backend.hcl` — **✅ mitigado** (no 100% eliminable)
+
+Ver detalle en §1.4. Se generó `backend_config_template` parametrizable y se documentó el comando de generación sin transcripción manual. El valor del account ID sigue apareciendo como texto literal en `backend.hcl` — es una limitación real de Terraform (los bloques `backend` no admiten interpolación), no un descuido de código.
+
+### 3.3 🔴 IP pública del operador hardcodeada en `terraform.tfvars` — **✅ corregido**
+
+**Diagnóstico:** `eks_cluster_endpoint_public_access_cidrs = ["190.46.102.227/32"]` era la IP pública del usuario en el momento del despliegue original. Cambia con la red (otra oficina, VPN, ISP con IP dinámica) y dejaría al operador sin acceso al endpoint público de la API de EKS hasta que alguien la actualizara a mano.
+
+**Fix aplicado:**
+- `eks_cluster_endpoint_public_access_cidrs` (en `eks-variables.tf`) ahora tiene `default = []`.
+- Se agregó `data "http" "operator_public_ip"` en `locals.tf`, que solo se evalúa (`count`) cuando la variable queda vacía, consultando `https://checkip.amazonaws.com`.
+- Un nuevo `local.eks_cluster_endpoint_public_access_cidrs` resuelve: valor explícito de la variable si se definió, o `["<ip-detectada>/32"]` si no.
+- `eks.tf` y `terraform.tfvars` actualizados para usar el local en vez del valor fijo.
+- Se agregó el provider `hashicorp/http` (`~> 3.4`) a `versions.tf`.
+
+**Trade-off aceptado explícitamente:** esto acopla `terraform plan`/`apply` a que `checkip.amazonaws.com` esté disponible — si esa API cae, hasta un `plan` de solo lectura fallaría. Se prefirió esta opción sobre dejarlo documentado-pero-manual porque el riesgo real (nadie actualiza la IP a mano y se queda sin acceso) es más probable que el riesgo teórico (esa API específica de AWS caída). Para evitar la dependencia de red, fijar `eks_cluster_endpoint_public_access_cidrs` explícitamente en `terraform.tfvars` sigue siendo una opción soportada.
+
+**Verificado:** `terraform init -upgrade` instaló el provider `http` sin errores; `terraform plan` con la auto-detección activa devolvió `No changes` — la IP detectada coincidió con la ya aplicada.
+
+### 3.4 🟡 READMEs desactualizados — **✅ corregido**
+
+- `bootstrap/aws-backend/README.md`: mencionaba la tabla DynamoDB ya eliminada (§1.2) y no documentaba el flujo de generación de `backend.hcl` (§1.4/§3.2). Actualizado.
+- `live/aws/dev/README.md`: describía "No NAT Gateway by default" y una sección de Cost Safety que ya no reflejaban el default corregido en §2.2. Actualizado.
+
+### 3.5 🟢 Regla hacia adelante — políticas IAM custom del proyecto
+
+No es un hardcode existente, sino una regla a aplicar en cambios futuros: si se agregan políticas IAM **propias** del proyecto (no AWS-managed) al módulo EKS u otros, no copiar el ARN resultante a mano — referenciar el recurso Terraform directamente (`aws_iam_policy.foo.arn`), igual que ya se hace en varias partes del código.
+
+### 3.6 🔲 Pendiente — guardarraíl para NAT Gateway deshabilitado con EKS en subnets privadas
+
+`enable_nat_gateway` ahora defaultea a `true` (§2.2), lo que evita el problema por omisión. No se implementó una validación explícita que falle rápido en `terraform plan` si alguien lo pone en `false` de todas formas con un node group EKS en subnets privadas — hoy, si se hiciera, el fallo seguiría apareciendo ~15-30 minutos después, a mitad de `apply`. Ejemplo de implementación si se decide agregarla:
+
+```hcl
+variable "enable_nat_gateway" {
+  type    = bool
+  default = true
+
+  validation {
+    condition     = var.enable_nat_gateway == true
+    error_message = "EKS node groups run in private subnets and require NAT Gateway for outbound access. Disabling this will hang terraform apply for 15-30 minutes before failing."
+  }
+}
+```
+
+### 3.7 🔲 Pendiente — `live/aws/shared/backend.hcl` sigue apuntando a la cuenta AWS ajena
+
+Detectado durante la revisión de §1.4, fuera del alcance original de esta bitácora (el foco fue `dev`): `platform/terraform/live/aws/shared/backend.hcl` todavía tiene `bucket = "atlas-commerce-shared-tfstate-529601496188-eu-central-1"` — la misma cuenta ajena (529601496188) que `dev` tenía antes de corregirse. No se tocó en este trabajo. Regenerar con el mismo comando de §1.4 cuando ese ambiente esté listo para usarse.
+
+### 3.8 🔲 Pendiente — VPC Endpoints como alternativa a NAT Gateway
+
+Si en el futuro el costo de NAT Gateway en `dev` (~$32/mes) se vuelve una preocupación real, una alternativa más barata es usar VPC Endpoints de tipo Gateway/Interface para `s3`, `ecr.api`, `ecr.dkr`, `eks`, `logs`, en vez de NAT completo. No implementado ni evaluado en profundidad — no cubre el 100% de lo que un nodo pueda necesitar (cualquier salida a internet genérica seguiría fallando), así que no reemplaza a NAT sin análisis adicional.
+
+---
+
+## 4. Siguiente fase (no iniciada)
+
+Fuera del alcance de Terraform, según el README raíz del repo ("Terraform aprovisiona infra; Helm despliega las apps"):
+
+- Conectar `kubectl` al cluster: `aws eks update-kubeconfig --name atlas-commerce-dev --region eu-central-1 --profile atlas-commerce`.
+- Desplegar Helm charts de las aplicaciones.
+- Configurar ALB Controller y External Secrets Operator dentro del cluster, usando los roles IRSA ya creados por este despliegue.
+- Resolver los pendientes de §3.6-§3.8 antes de replicar este patrón a `staging`/`prod`.
