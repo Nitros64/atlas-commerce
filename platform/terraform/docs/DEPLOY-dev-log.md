@@ -4,7 +4,7 @@
 > **Cuenta AWS:** 724772086459 (perfil CLI `atlas-commerce`, usuario IAM `terraform-admin`)
 > **Región:** eu-central-1 (Frankfurt)
 
-Registro cronológico del primer despliegue end-to-end del ambiente `dev`, en el orden real en que ocurrieron los hechos: bootstrap del backend remoto → `apply` del ambiente `dev` → hardening posterior contra valores hardcodeados. Cada hallazgo se marca **✅ corregido** en el momento en que se diagnosticó y arregló, o **🔲 pendiente** si quedó abierto.
+Registro cronológico único del bootstrap del backend remoto, el primer despliegue end-to-end del ambiente `dev`, el hardening posterior contra valores hardcodeados, y el destroy final — en el orden real en que ocurrieron los hechos. Incorpora también los hallazgos de la revisión previa del bootstrap (2026-06-22) que seguían vigentes. Cada hallazgo se marca **✅ corregido** en el momento en que se diagnosticó y arregló, **✅ corregido después** si se resolvió en una pasada posterior, o **🔲 pendiente** si quedó abierto.
 
 ---
 
@@ -200,6 +200,31 @@ Detectado durante la revisión de §1.4, fuera del alcance original de esta bit�
 ### 3.8 🔲 Pendiente — VPC Endpoints como alternativa a NAT Gateway
 
 Si en el futuro el costo de NAT Gateway en `dev` (~$32/mes) se vuelve una preocupación real, una alternativa más barata es usar VPC Endpoints de tipo Gateway/Interface para `s3`, `ecr.api`, `ecr.dkr`, `eks`, `logs`, en vez de NAT completo. No implementado ni evaluado en profundidad — no cubre el 100% de lo que un nodo pueda necesitar (cualquier salida a internet genérica seguiría fallando), así que no reemplaza a NAT sin análisis adicional.
+
+### 3.9 🟡 Pendiente — no se commitea `.terraform.lock.hcl` de `bootstrap/aws-backend`
+
+Detectado en una revisión previa del bootstrap (2026-06-22, antes de este ciclo de despliegue), sigue sin resolverse: la última línea de `.gitignore` es `.terraform.lock.hcl`, y no existe ninguno commiteado en el repo para `bootstrap/aws-backend` (los de `live/aws/dev` sí están trackeados, confirmado en este trabajo). El dependency lock file fija versiones y hashes exactos de providers — es distinto del state lock y del lockfile de S3. Sin commitearlo, cada `terraform init` en el bootstrap puede resolver una versión de provider distinta dentro de `~> 5.0`, reintroduciendo el problema "en mi máquina funciona".
+
+**Recomendación:** quitar `.terraform.lock.hcl` del `.gitignore`, correr `terraform init` en `bootstrap/aws-backend`, y commitear el archivo generado. Para equipos multi-OS, considerar `terraform providers lock -platform=linux_amd64 -platform=darwin_arm64 ...` para incluir los hashes de todas las plataformas relevantes.
+
+### 3.10 🟢 Ya validado — seguridad del bucket de estado (S3), sin cambios necesarios
+
+Confirmado durante la revisión previa del bootstrap y no alterado por ningún fix de este ciclo — los cinco controles que importan para un bucket de state de Terraform (que contiene secretos en texto plano: contraseñas de RDS, tokens, etc.) están todos presentes en `bootstrap/aws-backend/main.tf`:
+
+1. `aws_s3_bucket_public_access_block` con los 4 flags en `true`.
+2. `aws_s3_bucket_ownership_controls` con `object_ownership = "BucketOwnerEnforced"` (ACLs desactivadas).
+3. `aws_s3_bucket_versioning` = `Enabled` (recuperación ante corrupción o apply destructivo).
+4. `aws_s3_bucket_server_side_encryption_configuration` = `AES256` (SSE-S3).
+5. Bucket policy `DenyInsecureTransport` — deniega `s3:*` cuando `aws:SecureTransport = false`, forzando HTTPS/TLS.
+
+Además: lifecycle rule que expira versiones non-current a 90 días (evita crecimiento indefinido del bucket), y `default_tags` en el provider para tags consistentes en todos los recursos.
+
+### 3.11 🟢 Opcional, no urgente — hardening adicional del bucket de estado
+
+Dos mejoras opcionales identificadas, ninguna aplicada porque no son necesarias para el caso de uso actual:
+
+- **Defensa en profundidad en la bucket policy:** añadir (no reemplazar) una condición `aws:PrincipalAccount` a `DenyInsecureTransport` para limitar el acceso a la propia cuenta. Requiere probarse con cuidado para no bloquear a Terraform ni a servicios legítimos cross-account si los hubiera.
+- **SSE-KMS en vez de SSE-S3:** el roadmap original mencionaba "KMS key opcional"; la implementación usa `AES256`. Para state de Terraform, SSE-S3 es perfectamente aceptable — SSE-KMS solo aporta control de acceso por clave (denegar `kms:Decrypt` a quien no deba leer el estado) a costa de complejidad y coste por petición.
 
 ---
 
