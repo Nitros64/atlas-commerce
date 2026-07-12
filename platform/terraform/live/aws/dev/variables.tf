@@ -45,10 +45,14 @@ variable "private_subnet_cidrs" {
 }
 
 # Control whether private subnets receive outbound internet access through NAT.
+# Required when true: the EKS node group runs in private subnets and needs
+# outbound access to pull kubelet/CNI images and register with the cluster.
+# Disabling this without another egress path (e.g. VPC endpoints) leaves the
+# node group unable to complete creation.
 variable "enable_nat_gateway" {
   description = "Whether to create a NAT Gateway for private subnet outbound internet access."
   type        = bool
-  default     = false
+  default     = true
 }
 
 # Allow environment-specific tags without modifying module code.
