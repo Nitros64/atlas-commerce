@@ -74,7 +74,8 @@ data "aws_iam_policy_document" "external_secrets_read" {
     ]
 
     resources = [
-      local.external_secrets_secret_arn_pattern
+      local.external_secrets_secret_arn_pattern,
+      "arn:${data.aws_partition.current.partition}:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:rds!db-*"
     ]
   }
 }
