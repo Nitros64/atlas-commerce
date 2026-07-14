@@ -33,3 +33,8 @@ postgres:
 
 redis:
   enabled: false
+
+  external:
+    enabled: true
+    host: ""
+    port: "6379"  
