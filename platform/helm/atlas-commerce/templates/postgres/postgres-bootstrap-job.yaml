@@ -60,16 +60,19 @@ spec:
                   "$@"
               }
 
-              create_role() {
-                ROLE_NAME="$1"
+                    create_role() {
+                      ROLE_NAME="$1"
 
-                if psql_admin -tAc "SELECT 1 FROM pg_roles WHERE rolname='${ROLE_NAME}'" | grep -q 1; then
-                  echo "Role ${ROLE_NAME} already exists"
-                else
-                  echo "Creating role ${ROLE_NAME}"
-                  psql_admin -c "CREATE ROLE \"${ROLE_NAME}\" LOGIN PASSWORD '${APP_PASSWORD_ESCAPED}'"
-                fi
-              }
+                      if psql_admin -tAc "SELECT 1 FROM pg_roles WHERE rolname='${ROLE_NAME}'" | grep -q 1; then
+                        echo "Role ${ROLE_NAME} already exists"
+                      else
+                        echo "Creating role ${ROLE_NAME}"
+                        psql_admin -c "CREATE ROLE \"${ROLE_NAME}\" LOGIN PASSWORD '${APP_PASSWORD_ESCAPED}'"
+                      fi
+
+                      echo "Granting role ${ROLE_NAME} to admin user ${POSTGRES_ADMIN_USER}"
+                      psql_admin -c "GRANT \"${ROLE_NAME}\" TO \"${POSTGRES_ADMIN_USER}\""
+                    }
 
               create_database() {
                 DB_NAME="$1"

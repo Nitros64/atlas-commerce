@@ -35,6 +35,13 @@ spec:
           env:
             - name: JAVA_TOOL_OPTIONS
               value: {{ .Values.auth.javaToolOptions | quote }}
+            
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.instances.auth.secretName }}
+                  key: POSTGRES_PASSWORD  
+                  
           envFrom:
             - configMapRef:
                 name: cm-auth-spring-datasource
@@ -42,8 +49,6 @@ spec:
                 name: cm-redis
             - configMapRef:
                 name: cm-auth
-            - secretRef:
-                name: auth-secret
             - secretRef:
                 name: {{ .Values.auth.jwt.secretName }}
             - secretRef:
