@@ -23,6 +23,12 @@ secretManagement:
         remoteKey: atlas-commerce/dev/platform
         property: SECURITY_JWT_SECRET
 
+      postgres:
+        enabled: true
+        remoteKey: atlas-commerce/dev/platform
+        usernameProperty: POSTGRES_USER
+        passwordProperty: POSTGRES_PASSWORD  
+
 # These names are references only; no secret values live in Git.
 secrets:
   jwt:
