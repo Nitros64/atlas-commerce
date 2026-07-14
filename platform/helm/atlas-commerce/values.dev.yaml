@@ -26,7 +26,6 @@ secretManagement:
       postgres:
         enabled: true
         remoteKey: atlas-commerce/dev/platform
-        usernameProperty: POSTGRES_USER
         passwordProperty: POSTGRES_PASSWORD  
 
       redis:
