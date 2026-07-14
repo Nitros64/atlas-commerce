@@ -31,6 +31,12 @@ secrets:
 postgres:
   enabled: false
 
+  external:
+    enabled: true
+    host: ""
+    port: 5432
+
+# REDIS
 redis:
   enabled: false
 

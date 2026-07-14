@@ -1,0 +1,19 @@
+{{- if and (not .Values.postgres.enabled) .Values.postgres.external.enabled .Values.postgres.external.host }}
+{{- range $key, $db := .Values.postgres.instances }}
+{{- if $db.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $db.name }}
+  namespace: {{ $.Release.Namespace }}
+spec:
+  type: ExternalName
+  externalName: {{ $.Values.postgres.external.host | quote }}
+  ports:
+    - name: postgres
+      port: {{ $.Values.postgres.external.port | default 5432 }}
+      targetPort: {{ $.Values.postgres.external.port | default 5432 }}
+{{- end }}
+{{- end }}
+{{- end }}
