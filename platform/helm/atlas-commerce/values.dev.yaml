@@ -46,6 +46,20 @@ postgres:
     host: ""
     port: 5432
 
+  bootstrap:
+    enabled: true
+    image: postgres:17-alpine
+    backoffLimit: 3
+
+    adminSecret:
+      name: postgres-admin-secret
+      remoteKey: ""
+      usernameProperty: username
+      passwordProperty: password
+
+    appPasswordSecretName: postgres-auth-secret
+    appPasswordSecretKey: POSTGRES_PASSWORD  
+
 # REDIS
 redis:
   enabled: false

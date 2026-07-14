@@ -1,0 +1,104 @@
+{{- if and (not .Values.postgres.enabled) .Values.postgres.bootstrap.enabled .Values.postgres.external.host .Values.postgres.bootstrap.adminSecret.remoteKey }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-bootstrap
+  namespace: {{ .Release.Namespace }}
+spec:
+  backoffLimit: {{ .Values.postgres.bootstrap.backoffLimit | default 3 }}
+  template:
+    metadata:
+      labels:
+        app: postgres-bootstrap
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: postgres-bootstrap
+          image: {{ .Values.postgres.bootstrap.image | quote }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POSTGRES_HOST
+              value: {{ .Values.postgres.external.host | quote }}
+            - name: POSTGRES_PORT
+              value: {{ .Values.postgres.external.port | default 5432 | quote }}
+
+            - name: POSTGRES_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.bootstrap.adminSecret.name }}
+                  key: POSTGRES_ADMIN_USER
+
+            - name: POSTGRES_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.bootstrap.adminSecret.name }}
+                  key: POSTGRES_ADMIN_PASSWORD
+
+            - name: APP_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.bootstrap.appPasswordSecretName }}
+                  key: {{ .Values.postgres.bootstrap.appPasswordSecretKey }}
+
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+
+              export PGPASSWORD="$POSTGRES_ADMIN_PASSWORD"
+
+              APP_PASSWORD_ESCAPED="$(printf "%s" "$APP_POSTGRES_PASSWORD" | sed "s/'/''/g")"
+
+              psql_admin() {
+                psql \
+                  -h "$POSTGRES_HOST" \
+                  -p "$POSTGRES_PORT" \
+                  -U "$POSTGRES_ADMIN_USER" \
+                  -d postgres \
+                  -v ON_ERROR_STOP=1 \
+                  "$@"
+              }
+
+              create_role() {
+                ROLE_NAME="$1"
+
+                if psql_admin -tAc "SELECT 1 FROM pg_roles WHERE rolname='${ROLE_NAME}'" | grep -q 1; then
+                  echo "Role ${ROLE_NAME} already exists"
+                else
+                  echo "Creating role ${ROLE_NAME}"
+                  psql_admin -c "CREATE ROLE \"${ROLE_NAME}\" LOGIN PASSWORD '${APP_PASSWORD_ESCAPED}'"
+                fi
+              }
+
+              create_database() {
+                DB_NAME="$1"
+                OWNER_NAME="$2"
+
+                if psql_admin -tAc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" | grep -q 1; then
+                  echo "Database ${DB_NAME} already exists"
+                else
+                  echo "Creating database ${DB_NAME} owned by ${OWNER_NAME}"
+                  psql_admin -c "CREATE DATABASE \"${DB_NAME}\" OWNER \"${OWNER_NAME}\""
+                fi
+
+                psql \
+                  -h "$POSTGRES_HOST" \
+                  -p "$POSTGRES_PORT" \
+                  -U "$POSTGRES_ADMIN_USER" \
+                  -d "$DB_NAME" \
+                  -v ON_ERROR_STOP=1 \
+                  -c "GRANT ALL PRIVILEGES ON DATABASE \"${DB_NAME}\" TO \"${OWNER_NAME}\"" \
+                  -c "GRANT ALL ON SCHEMA public TO \"${OWNER_NAME}\"" \
+                  -c "ALTER SCHEMA public OWNER TO \"${OWNER_NAME}\""
+              }
+
+              {{- range $key, $db := .Values.postgres.instances }}
+              {{- if $db.enabled }}
+              create_role {{ $db.username | quote }}
+              create_database {{ $db.database | quote }} {{ $db.username | quote }}
+              {{- end }}
+              {{- end }}
+
+              echo "PostgreSQL bootstrap completed"
+{{- end }}
