@@ -13,26 +13,24 @@ JWT_SECRET="$(openssl rand -base64 48)"
 REDIS_PASSWORD="$(openssl rand -base64 32)"
 POSTGRES_PASSWORD="$(openssl rand -base64 32)"
 
-TMP_SECRET_FILE="$(mktemp)"
-
-cat > "$TMP_SECRET_FILE" <<EOF
+SECRET_STRING=$(cat <<EOF
 {
   "SECURITY_JWT_SECRET": "$JWT_SECRET",
   "REDIS_PASSWORD": "$REDIS_PASSWORD",
   "POSTGRES_PASSWORD": "$POSTGRES_PASSWORD"
 }
 EOF
+)
 
 aws secretsmanager put-secret-value \
   --region "$REGION" \
   --secret-id "$PLATFORM_SECRET_NAME" \
-  --secret-string "file://$TMP_SECRET_FILE"
-
-rm -f "$TMP_SECRET_FILE"
+  --secret-string "$SECRET_STRING"
 
 unset JWT_SECRET
 unset REDIS_PASSWORD
 unset POSTGRES_PASSWORD
+unset SECRET_STRING
 
 echo "Seeded platform secret: $PLATFORM_SECRET_NAME"
 echo "Keys:"
