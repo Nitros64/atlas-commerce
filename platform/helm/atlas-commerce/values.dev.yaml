@@ -60,6 +60,20 @@ postgres:
     appPasswordSecretName: postgres-auth-secret
     appPasswordSecretKey: POSTGRES_PASSWORD  
 
+runtime:
+  datasource:
+    hikari:
+      maximumPoolSize: 2
+      minimumIdle: 0
+      connectionTimeout: 30000
+
+auth:
+  datasource:
+    hikari:
+      maximumPoolSize: 4
+      minimumIdle: 0
+      connectionTimeout: 30000    
+
 # REDIS
 redis:
   enabled: false

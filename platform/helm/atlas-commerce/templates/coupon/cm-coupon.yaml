@@ -9,6 +9,11 @@ data:
   SERVER_PORT: {{ .Values.coupon.deployment.containerPort | quote }}
   SPRING_DATASOURCE_URL: {{ .Values.coupon.datasource.url | quote }}
   SPRING_DATASOURCE_USERNAME: {{ .Values.postgres.instances.coupon.username | quote }}
+  
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: {{ .Values.runtime.datasource.hikari.maximumPoolSize | quote }}
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: {{ .Values.runtime.datasource.hikari.minimumIdle | quote }}
+  SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: {{ .Values.runtime.datasource.hikari.connectionTimeout | quote }}
+  
   SPRING_DATASOURCE_DRIVER_CLASS_NAME: {{ .Values.coupon.datasource.driverClassName | quote }}
   SPRING_JPA_HIBERNATE_DDL_AUTO: {{ .Values.coupon.datasource.ddlAuto | quote }}
   MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: {{ .Values.coupon.management.healthProbesEnabled | quote }}

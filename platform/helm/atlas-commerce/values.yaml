@@ -43,6 +43,13 @@ notification:
 audit:
   enabled: false
 
+runtime:
+  datasource:
+    hikari:
+      maximumPoolSize: 10
+      minimumIdle: 1
+      connectionTimeout: 30000  
+
 ingress:
   enabled: false
   className: nginx

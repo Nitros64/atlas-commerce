@@ -8,6 +8,11 @@ data:
   SPRING_PROFILES_ACTIVE: "docker"
   SPRING_DATASOURCE_URL: {{ .Values.catalog.datasource.url | quote }}
   SPRING_DATASOURCE_DRIVER_CLASS_NAME: {{ .Values.catalog.datasource.driverClassName | quote }}
+  
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: {{ .Values.runtime.datasource.hikari.maximumPoolSize | quote }}
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: {{ .Values.runtime.datasource.hikari.minimumIdle | quote }}
+  SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: {{ .Values.runtime.datasource.hikari.connectionTimeout | quote }}
+
   SPRING_DATA_REDIS_HOST: {{ default .Values.catalog.redis.host .Values.redis.external.host | quote }}
   SPRING_DATA_REDIS_PORT: {{ .Values.catalog.redis.port | quote }}
   SPRING_DATA_REDIS_SSL_ENABLED: {{ .Values.redis.external.sslEnabled | default false | quote }}
