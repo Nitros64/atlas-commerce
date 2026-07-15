@@ -7,4 +7,5 @@ metadata:
 data:
   SPRING_DATA_REDIS_HOST: {{ default .Values.redis.name .Values.redis.external.host | quote }}
   SPRING_DATA_REDIS_PORT: {{ default .Values.redis.service.port .Values.redis.external.port | quote }}
+  SPRING_DATA_REDIS_SSL_ENABLED: {{ .Values.redis.external.sslEnabled | default false | quote }}
 {{- end }}

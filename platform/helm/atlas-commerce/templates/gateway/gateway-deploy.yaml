@@ -47,6 +47,9 @@ spec:
             - name: SPRING_DATA_REDIS_PORT
               value: {{ .Values.gateway.env.redisPort | quote }}
 
+            - name: SPRING_DATA_REDIS_SSL_ENABLED
+              value: {{ .Values.redis.external.sslEnabled | default false | quote }}  
+
             - name: SPRING_DATA_REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:

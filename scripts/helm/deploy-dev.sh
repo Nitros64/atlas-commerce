@@ -11,6 +11,7 @@ TERRAFORM_DIR="$PROJECT_ROOT/platform/terraform/live/aws/dev"
 
 POSTGRES_HOST="$(terraform -chdir="$TERRAFORM_DIR" output -raw rds_postgresql_address)"
 REDIS_HOST="$(terraform -chdir="$TERRAFORM_DIR" output -raw redis_primary_endpoint)"
+REDIS_SSL_ENABLED="true"
 RDS_MASTER_SECRET_ARN="$(terraform -chdir="$TERRAFORM_DIR" output -raw rds_postgresql_master_secret_arn)"
 PLATFORM_SECRET_NAME="$(terraform -chdir="$TERRAFORM_DIR" output -raw platform_secret_name)"
 
@@ -61,10 +62,15 @@ helm upgrade --install "$RELEASE_NAME" "$CHART_DIR" \
   "${HELM_ARGS[@]}" \
   --set postgres.external.host="$POSTGRES_HOST" \
   --set redis.external.host="$REDIS_HOST" \
+  --set redis.external.host="$REDIS_HOST" \
+  --set catalog.redis.host="$REDIS_HOST" \
+  --set gateway.env.redisHost="$REDIS_HOST" \
+  --set redis.external.sslEnabled="$REDIS_SSL_ENABLED" \
   --set postgres.bootstrap.adminSecret.remoteKey="$RDS_MASTER_SECRET_ARN" \
   --set secretManagement.externalSecrets.secrets.jwt.remoteKey="$PLATFORM_SECRET_NAME" \
   --set secretManagement.externalSecrets.secrets.redis.remoteKey="$PLATFORM_SECRET_NAME" \
-  --set secretManagement.externalSecrets.secrets.postgres.remoteKey="$PLATFORM_SECRET_NAME"
+  --set secretManagement.externalSecrets.secrets.postgres.remoteKey="$PLATFORM_SECRET_NAME" \
+  
 
 echo ""
 echo "Atlas DEV deploy completed."
