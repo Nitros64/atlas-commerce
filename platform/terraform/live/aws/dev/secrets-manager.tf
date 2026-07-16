@@ -11,4 +11,5 @@ module "secrets_manager" {
   ]
 
   additional_tags = var.additional_tags
+  recovery_window_in_days = 0
 }

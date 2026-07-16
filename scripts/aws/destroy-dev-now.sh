@@ -149,11 +149,41 @@ print_cost_control_check() {
     --output table || true
 }
 
+cleanup_orphan_k8s_enis() {
+  echo ""
+  echo "Checking for orphan Kubernetes ENIs..."
+
+  ORPHAN_ENIS="$(
+    aws ec2 describe-network-interfaces \
+      --region "$REGION" \
+      --filters "Name=status,Values=available" \
+      --query "NetworkInterfaces[?contains(Description, 'aws-K8S-')].NetworkInterfaceId" \
+      --output text
+  )"
+
+  if [[ -z "$ORPHAN_ENIS" ]]; then
+    echo "No orphan Kubernetes ENIs found."
+    return
+  fi
+
+  echo "Found orphan Kubernetes ENIs:"
+  echo "$ORPHAN_ENIS"
+
+  for eni_id in $ORPHAN_ENIS; do
+    echo "Deleting orphan Kubernetes ENI: $eni_id"
+    aws ec2 delete-network-interface \
+      --region "$REGION" \
+      --network-interface-id "$eni_id" || true
+  done
+}
+
 if aws eks describe-cluster --region "$REGION" --name "$CLUSTER_NAME" >/dev/null 2>&1; then
   cleanup_kubernetes
 else
   echo "Cluster not reachable or already deleted. Skipping Kubernetes cleanup."
 fi
+
+cleanup_orphan_k8s_enis
 
 echo ""
 echo "Running terraform destroy..."
@@ -161,7 +191,10 @@ terraform -chdir="$TERRAFORM_DIR" destroy -auto-approve
 
 delete_platform_secret
 cleanup_orphan_ebs_volumes
-print_cost_control_check
+
+echo ""
+echo "Running final cost-control check..."
+"$SCRIPT_DIR/cost-control-check-dev.sh"
 
 echo ""
 echo "DEV destroy completed."

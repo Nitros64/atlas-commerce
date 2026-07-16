@@ -63,16 +63,16 @@ postgres:
 runtime:
   datasource:
     hikari:
-      maximumPoolSize: 2
+      maximumPoolSize: 4
       minimumIdle: 0
-      connectionTimeout: 30000
+      connectionTimeout: 60000
 
 auth:
   datasource:
     hikari:
       maximumPoolSize: 4
       minimumIdle: 0
-      connectionTimeout: 30000    
+      connectionTimeout: 60000    
 
 # REDIS
 redis:
