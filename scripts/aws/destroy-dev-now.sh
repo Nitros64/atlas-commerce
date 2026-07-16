@@ -177,6 +177,49 @@ cleanup_orphan_k8s_enis() {
   done
 }
 
+cleanup_orphan_eks_security_groups() {
+  echo ""
+  echo "Checking for orphan EKS cluster security groups..."
+
+  ORPHAN_SGS="$(
+    aws ec2 describe-security-groups \
+      --region "$REGION" \
+      --query "SecurityGroups[?contains(GroupName, 'eks-cluster-sg-atlas-commerce-dev')].GroupId" \
+      --output text
+  )"
+
+  if [[ -z "$ORPHAN_SGS" ]]; then
+    echo "No orphan EKS security groups found."
+    return
+  fi
+
+  echo "Found possible orphan EKS security groups:"
+  echo "$ORPHAN_SGS"
+
+  for sg_id in $ORPHAN_SGS; do
+    echo "Checking dependencies for security group: $sg_id"
+
+    ENIS_USING_SG="$(
+      aws ec2 describe-network-interfaces \
+        --region "$REGION" \
+        --filters "Name=group-id,Values=$sg_id" \
+        --query "NetworkInterfaces[].NetworkInterfaceId" \
+        --output text
+    )"
+
+    if [[ -n "$ENIS_USING_SG" ]]; then
+      echo "Security group $sg_id is still used by ENIs:"
+      echo "$ENIS_USING_SG"
+      continue
+    fi
+
+    echo "Deleting orphan EKS security group: $sg_id"
+    aws ec2 delete-security-group \
+      --region "$REGION" \
+      --group-id "$sg_id" || true
+  done
+}
+
 if aws eks describe-cluster --region "$REGION" --name "$CLUSTER_NAME" >/dev/null 2>&1; then
   cleanup_kubernetes
 else
@@ -187,7 +230,18 @@ cleanup_orphan_k8s_enis
 
 echo ""
 echo "Running terraform destroy..."
-terraform -chdir="$TERRAFORM_DIR" destroy -auto-approve
+if ! terraform -chdir="$TERRAFORM_DIR" destroy -auto-approve; then
+  echo ""
+  echo "Terraform destroy failed. Running orphan cleanup and retrying..."
+
+  cleanup_orphan_k8s_enis
+  cleanup_orphan_eks_security_groups
+  cleanup_orphan_ebs_volumes
+
+  echo ""
+  echo "Retrying terraform destroy..."
+  terraform -chdir="$TERRAFORM_DIR" destroy -auto-approve
+fi
 
 delete_platform_secret
 cleanup_orphan_ebs_volumes
