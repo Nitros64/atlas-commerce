@@ -143,27 +143,8 @@ echo "Deploying Atlas DEV with Helm..."
 "$PROJECT_ROOT/scripts/helm/deploy-dev.sh"
 
 echo ""
-echo "Waiting for Atlas deployments..."
-kubectl rollout status deployment/auth -n atlas --timeout=10m
-kubectl rollout status deployment/gateway -n atlas --timeout=10m
-kubectl rollout status deployment/kafka -n atlas --timeout=10m
-kubectl rollout status deployment/pricing -n atlas --timeout=10m
-
-for app in audit cart catalog coupon inventory notification order payment shipping; do
-  kubectl rollout status deployment/"$app" -n atlas --timeout=10m
-done
-
-echo ""
-echo "Final Atlas pod status:"
-kubectl get pods -n atlas -o wide
-
-echo ""
-echo "External Secrets status:"
-kubectl get externalsecret -n atlas || true
-
-echo ""
-echo "PostgreSQL bootstrap status:"
-kubectl get job postgres-bootstrap -n atlas || true
+echo "Running Atlas DEV runtime check..."
+"$PROJECT_ROOT/scripts/k8s/check-dev-runtime.sh"
 
 echo ""
 echo "Atlas DEV environment created successfully."
