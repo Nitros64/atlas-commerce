@@ -114,7 +114,7 @@ aws iam list-policies --scope AWS --query "Policies[?contains(PolicyName, 'EBSCS
 
 **Fix estructural aplicado después (mismo día, ver §3):** en vez de dejar el ARN corregido "a mano" (que puede volver a romperse con la próxima política que alguien agregue), se reemplazaron los 6 ARNs de políticas AWS-managed hardcodeados en el módulo EKS (`iam.tf`, `irsa.tf`, `ebs-csi.tf`) por `data "aws_iam_policy"` — Terraform resuelve el ARN real buscando por **nombre**, eliminando la necesidad de adivinar el path. Verificado con `terraform plan` contra el ambiente ya desplegado: `No changes` — el ARN resuelto es idéntico al ya aplicado.
 
-**Nota operativa:** el `apply` se había ejecutado como `terraform apply tfplan 2>&1 | tee log.txt` sin `set -o pipefail`, así que el exit code del comando fue el de `tee` (0), no el de `terraform apply` (el que realmente falló). El error se detectó por un monitor de log en paralelo, no por el exit code — casi pasa desapercibido. **Pendiente 🔲:** documentar/aplicar `set -o pipefail` en cualquier script o pipeline que envuelva `terraform apply`.
+**Nota operativa:** el `apply` se había ejecutado como `terraform apply tfplan 2>&1 | tee log.txt` sin `set -o pipefail`, así que el exit code del comando fue el de `tee` (0), no el de `terraform apply` (el que realmente falló). El error se detectó por un monitor de log en paralelo, no por el exit code — casi pasa desapercibido. **✅ corregido después:** los scripts `scripts/aws/create-dev-now.sh` y `scripts/aws/destroy-dev-now.sh` ya declaran `set -euo pipefail` y corren `terraform` directamente (sin envolverlo en `| tee`), así que el exit code que se propaga es el de Terraform.
 
 ### 2.4 Estado al cierre del despliegue
 
@@ -193,19 +193,23 @@ variable "enable_nat_gateway" {
 }
 ```
 
-### 3.7 🔲 Pendiente — `live/aws/shared/backend.hcl` sigue apuntando a la cuenta AWS ajena
+### 3.7 🔴 `live/aws/shared/backend.hcl` apuntaba a la cuenta AWS ajena — **✅ corregido**
 
-Detectado durante la revisión de §1.4, fuera del alcance original de esta bitácora (el foco fue `dev`): `platform/terraform/live/aws/shared/backend.hcl` todavía tiene `bucket = "atlas-commerce-shared-tfstate-529601496188-eu-central-1"` — la misma cuenta ajena (529601496188) que `dev` tenía antes de corregirse. No se tocó en este trabajo. Regenerar con el mismo comando de §1.4 cuando ese ambiente esté listo para usarse.
+Detectado durante la revisión de §1.4, fuera del alcance original de esta bitácora (el foco fue `dev`): `platform/terraform/live/aws/shared/backend.hcl` tenía `bucket = "atlas-commerce-shared-tfstate-529601496188-eu-central-1"` — la misma cuenta ajena (529601496188) que `dev` tenía antes de corregirse.
+
+**Fix aplicado:** se corrigió el `bucket` a la cuenta real del usuario (`724772086459`) y se dejó el archivo con el mismo formato comentado que `live/aws/dev/backend.hcl`. Coincide con el valor que produce el comando de generación de §1.4 (`terraform output -raw backend_config_template | sed 's#<ENV>#shared#'`). Aún no se ha ejecutado `terraform init` contra este backend porque el ambiente `shared` todavía no se despliega.
 
 ### 3.8 🔲 Pendiente — VPC Endpoints como alternativa a NAT Gateway
 
 Si en el futuro el costo de NAT Gateway en `dev` (~$32/mes) se vuelve una preocupación real, una alternativa más barata es usar VPC Endpoints de tipo Gateway/Interface para `s3`, `ecr.api`, `ecr.dkr`, `eks`, `logs`, en vez de NAT completo. No implementado ni evaluado en profundidad — no cubre el 100% de lo que un nodo pueda necesitar (cualquier salida a internet genérica seguiría fallando), así que no reemplaza a NAT sin análisis adicional.
 
-### 3.9 🟡 Pendiente — no se commitea `.terraform.lock.hcl` de `bootstrap/aws-backend`
+### 3.9 🟡 `.terraform.lock.hcl` de `bootstrap/aws-backend` no commiteado — **✅ corregido después**
 
-Detectado en una revisión previa del bootstrap (2026-06-22, antes de este ciclo de despliegue), sigue sin resolverse: la última línea de `.gitignore` es `.terraform.lock.hcl`, y no existe ninguno commiteado en el repo para `bootstrap/aws-backend` (los de `live/aws/dev` sí están trackeados, confirmado en este trabajo). El dependency lock file fija versiones y hashes exactos de providers — es distinto del state lock y del lockfile de S3. Sin commitearlo, cada `terraform init` en el bootstrap puede resolver una versión de provider distinta dentro de `~> 5.0`, reintroduciendo el problema "en mi máquina funciona".
+Detectado en una revisión previa del bootstrap (2026-06-22, antes de este ciclo de despliegue): el dependency lock file fija versiones y hashes exactos de providers (distinto del state lock y del lockfile de S3); sin commitearlo, cada `terraform init` puede resolver una versión de provider distinta dentro de `~> 5.0`, reintroduciendo el "en mi máquina funciona".
 
-**Recomendación:** quitar `.terraform.lock.hcl` del `.gitignore`, correr `terraform init` en `bootstrap/aws-backend`, y commitear el archivo generado. Para equipos multi-OS, considerar `terraform providers lock -platform=linux_amd64 -platform=darwin_arm64 ...` para incluir los hashes de todas las plataformas relevantes.
+**Estado actual (verificado en este ciclo):** ya no aplica. El `.gitignore` actual no ignora `.terraform.lock.hcl`, y los tres lock files están trackeados en git: `bootstrap/aws-backend`, `live/aws/dev` y `live/aws/shared`. `git check-ignore` no marca ninguno como ignorado.
+
+**Recomendación hacia adelante:** para equipos multi-OS, considerar `terraform providers lock -platform=linux_amd64 -platform=darwin_arm64 ...` para incluir los hashes de todas las plataformas relevantes en cada lock file.
 
 ### 3.10 🟢 Ya validado — seguridad del bucket de estado (S3), sin cambios necesarios
 
