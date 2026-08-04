@@ -18,14 +18,14 @@ This bootstrap folder intentionally uses local Terraform state because it create
 
 ## Generating backend.hcl for a live environment
 
-Do not hand-type the state bucket name into a new `live/aws/<env>/backend.hcl` — copying it from memory is how `dev`'s backend once ended up pointing at a bucket in the wrong AWS account. Generate it from this module's output instead:
+Do not hand-type the state bucket name into a new `live/aws/<env>/backend.hcl` — copying it from memory is how `alpha`'s backend once ended up pointing at a bucket in the wrong AWS account. Generate it from this module's output instead:
 
 ```bash
 cd platform/terraform/bootstrap/aws-backend
-terraform output -raw backend_config_template | sed 's#<ENV>#dev#' > ../../live/aws/dev/backend.hcl
+./generate-backend-hcl.sh alpha
 ```
 
-Replace `dev` in both places with the target environment name.
+This runs `terraform output -raw backend_config_template` against this module's own state and writes `../../live/aws/<env>/backend.hcl`. Run it again for every environment (`staging`, `prod`, `shared`, ...) and whenever the bootstrap is re-applied against a different AWS account.
 
 ## Usage
 

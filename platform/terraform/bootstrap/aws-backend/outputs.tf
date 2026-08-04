@@ -19,9 +19,9 @@ output "backend_config_template" {
     values are read from this state, not retyped by hand, to avoid pointing
     a new environment at the wrong AWS account's state bucket.
 
-    Generate a real backend.hcl without manual transcription, e.g. for dev:
+    Generate a real backend.hcl without manual transcription, e.g. for alpha:
       terraform output -raw backend_config_template \
-        | sed 's#<ENV>#dev#' > ../../live/aws/dev/backend.hcl
+        | sed 's#<ENV>#alpha#' > ../../live/aws/alpha/backend.hcl
   EOT
   value       = <<EOT
 bucket       = "${aws_s3_bucket.terraform_state.bucket}"
