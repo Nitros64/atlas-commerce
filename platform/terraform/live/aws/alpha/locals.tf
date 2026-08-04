@@ -10,7 +10,7 @@ data "http" "operator_public_ip" {
 }
 
 locals {
-  # Build a consistent resource name prefix, for example atlas-commerce-dev.
+  # Build a consistent resource name prefix, for example atlas-commerce-alpha.
   name_prefix = "${var.project}-${var.environment}"
 
   # Define tags automatically applied to Atlas development resources.

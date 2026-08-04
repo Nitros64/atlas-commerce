@@ -1,7 +1,7 @@
 variable "rds_identifier" {
   description = "Stable identifier for the development PostgreSQL RDS instance."
   type        = string
-  default     = "atlas-commerce-dev-postgresql"
+  default     = "atlas-commerce-alpha-postgresql"
 }
 
 variable "rds_engine_version" {
@@ -46,7 +46,7 @@ variable "rds_deletion_protection" {
 }
 
 variable "rds_skip_final_snapshot" {
-  description = "Whether Terraform skips the final snapshot when destroying dev RDS."
+  description = "Whether Terraform skips the final snapshot when destroying alpha RDS."
   type        = bool
   default     = true
 }

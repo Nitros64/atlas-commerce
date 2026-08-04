@@ -16,7 +16,7 @@ variable "project" {
 variable "environment" {
   description = "Environment name."
   type        = string
-  default     = "dev"
+  default     = "alpha"
 }
 
 # Define the CIDR range assigned to the development VPC.

@@ -1,6 +1,6 @@
-# Atlas Commerce - AWS Development Environment
+# Atlas Commerce - AWS Alpha Environment
 
-Terraform root module for the Atlas Commerce development environment in AWS Frankfurt (`eu-central-1`).
+Terraform root module for the Atlas Commerce `alpha` (development) environment in AWS Frankfurt (`eu-central-1`).
 
 ## What This Environment Creates
 
@@ -17,7 +17,7 @@ Terraform root module for the Atlas Commerce development environment in AWS Fran
 Terraform state is stored remotely in the shared S3 backend:
 
 ```text
-atlas-commerce/dev/terraform.tfstate
+atlas-commerce/alpha/terraform.tfstate
 ```
 
 State locking uses S3 lockfiles.
@@ -40,8 +40,16 @@ Private subnets have no outbound Internet route if `enable_nat_gateway` is set t
 
 ## Usage
 
+`backend.hcl` is generated, not committed — it always reflects the current AWS account's state bucket. Generate it before `terraform init`:
+
 ```powershell
-cd platform\terraform\live\aws\dev
+cd platform\terraform\bootstrap\aws-backend
+.\generate-backend-hcl.sh alpha   # or the equivalent under Git Bash/WSL
+cd ..\..\live\aws\alpha
+```
+
+```powershell
+cd platform\terraform\live\aws\alpha
 
 Copy-Item terraform.tfvars.example terraform.tfvars
 

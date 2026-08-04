@@ -1,7 +1,7 @@
 variable "redis_replication_group_id" {
   description = "Stable identifier for the development ElastiCache Redis replication group."
   type        = string
-  default     = "atlas-commerce-dev-redis"
+  default     = "atlas-commerce-alpha-redis"
 }
 
 variable "redis_engine_version" {

@@ -1,6 +1,6 @@
 variable "eks_cluster_name" {
   type    = string
-  default = "atlas-commerce-dev"
+  default = "atlas-commerce-alpha"
 }
 
 variable "eks_kubernetes_version" {
