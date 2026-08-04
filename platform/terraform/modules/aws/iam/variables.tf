@@ -6,6 +6,11 @@ variable "environment" {
   type = string
 }
 
+variable "github_oidc_provider_arn" {
+  description = "ARN of the GitHub Actions OIDC provider to trust. AWS allows only one OIDC provider per issuer URL per account, so this must reference the provider created by bootstrap/gh-actions-oidc rather than creating a new one."
+  type        = string
+}
+
 variable "github_organization" {
   description = "GitHub organization or user that owns the repository."
   type        = string

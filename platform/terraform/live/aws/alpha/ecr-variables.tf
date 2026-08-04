@@ -1,16 +1,6 @@
-variable "aws_region" {
-  type    = string
-  default = "eu-central-1"
-}
-
-variable "project" {
-  type    = string
-  default = "atlas-commerce"
-}
-
-variable "environment" {
-  type    = string
-  default = "shared"
+variable "github_oidc_provider_arn" {
+  description = "ARN of the GitHub Actions OIDC provider created by bootstrap/gh-actions-oidc (output oidc_provider_arn). AWS allows only one OIDC provider per issuer URL per account, so this is passed in rather than created here."
+  type        = string
 }
 
 variable "repository_prefix" {
@@ -47,9 +37,4 @@ variable "max_tagged_images" {
 variable "untagged_image_expiration_days" {
   type    = number
   default = 7
-}
-
-variable "additional_tags" {
-  type    = map(string)
-  default = {}
 }

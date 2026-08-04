@@ -1,20 +1,3 @@
-# Register GitHub Actions as a trusted OIDC identity provider in this AWS account.
-resource "aws_iam_openid_connect_provider" "github_actions" {
-  # GitHub publishes OIDC tokens from this issuer URL.
-  url = "https://token.actions.githubusercontent.com"
-
-  # The official AWS GitHub Action requests tokens for AWS STS.
-  client_id_list = ["sts.amazonaws.com"]
-
-  tags = merge(
-    local.common_tags,
-    {
-      Name = "${local.name_prefix}-github-actions-oidc"
-      Role = "github-actions-oidc-provider"
-    }
-  )
-}
-
 # Build the trust policy that limits role assumption to this repository and branch.
 data "aws_iam_policy_document" "github_actions_assume_role" {
   statement {
@@ -26,11 +9,13 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
     ]
 
     principals {
-      # Trust only the GitHub OIDC provider created above.
+      # Trust the GitHub OIDC provider created by bootstrap/gh-actions-oidc.
+      # AWS allows only one OIDC provider per issuer URL per account, so this
+      # module reuses it instead of creating its own.
       type = "Federated"
 
       identifiers = [
-        aws_iam_openid_connect_provider.github_actions.arn
+        var.github_oidc_provider_arn
       ]
     }
 
