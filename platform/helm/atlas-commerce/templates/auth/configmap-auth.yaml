@@ -1,3 +1,4 @@
+{{- if .Values.auth.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -11,3 +12,4 @@ data:
   SECURITY_RATE_LIMIT_LOGIN_MAX_ATTEMPTS: {{ .Values.auth.security.loginMaxAttempts | quote }}
   SECURITY_RATE_LIMIT_LOGIN_WINDOW_SECONDS: {{ .Values.auth.security.loginWindowSeconds | quote }}
   SERVER_FORWARD_HEADERS_STRATEGY: {{ .Values.auth.server.forwardHeadersStrategy | quote }}
+{{- end }}
