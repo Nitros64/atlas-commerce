@@ -7,6 +7,7 @@ NAMESPACE="atlas"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 CHART_DIR="$PROJECT_ROOT/platform/helm/atlas-commerce"
+DEV_ECR_REGISTRY="${ECR_REGISTRY:-000000000000.dkr.ecr.eu-central-1.amazonaws.com}"
 
 VALUES_FILES=(
   "$CHART_DIR/values/auth.yaml"
@@ -26,6 +27,7 @@ VALUES_FILES=(
   "$CHART_DIR/values/redis.yaml"
   "$CHART_DIR/values/ingress.yaml"
   "$CHART_DIR/values.dev.yaml"
+  "$CHART_DIR/values/images.dev.yaml"
 )
 
 echo "Rendering Helm chart for DEV..."
@@ -47,4 +49,5 @@ done
 
 helm template "$RELEASE_NAME" "$CHART_DIR" \
   -n "$NAMESPACE" \
-  "${HELM_ARGS[@]}"
+  "${HELM_ARGS[@]}" \
+  --set-string global.imageRegistry="$DEV_ECR_REGISTRY"

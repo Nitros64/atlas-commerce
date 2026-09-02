@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
         - name: {{ .Values.gateway.labels.app }}
-          image: "{{ .Values.gateway.deployment.image.repository }}:{{ .Values.gateway.deployment.image.tag }}"
+          image: "{{ if .Values.global.imageRegistry }}{{ .Values.global.imageRegistry }}/{{ end }}{{ .Values.gateway.deployment.image.repository }}:{{ .Values.gateway.deployment.image.tag }}"
           imagePullPolicy: {{ .Values.gateway.deployment.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.gateway.deployment.containerPort }}

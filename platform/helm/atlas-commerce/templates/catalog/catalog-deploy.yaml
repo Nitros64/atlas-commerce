@@ -26,7 +26,7 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.catalog.deployment.terminationGracePeriodSeconds }}
       containers:
         - name: {{ .Values.catalog.labels.app }}
-          image: "{{ .Values.catalog.deployment.image.repository }}:{{ .Values.catalog.deployment.image.tag }}"
+          image: "{{ if .Values.global.imageRegistry }}{{ .Values.global.imageRegistry }}/{{ end }}{{ .Values.catalog.deployment.image.repository }}:{{ .Values.catalog.deployment.image.tag }}"
           imagePullPolicy: {{ .Values.catalog.deployment.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.catalog.deployment.containerPort }}
