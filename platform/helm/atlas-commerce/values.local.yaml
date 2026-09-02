@@ -1,0 +1,10 @@
+# Supported local profile.
+#
+# The chart defaults are loaded automatically. Local scripts then apply the
+# component values in the documented canonical order, this file, the ignored
+# values/secrets-local.yaml file, and values/local-lite.yaml.
+#
+# Keep non-secret local-only overrides in this file.
+
+secretManagement:
+  createByHelm: true

@@ -10,7 +10,6 @@ CHART_DIR="$PROJECT_ROOT/platform/helm/atlas-commerce"
 RENDER_OUTPUT="${TMPDIR:-/tmp}/atlas-dev-rendered.yaml"
 
 VALUES_FILES=(
-  "$CHART_DIR/values/audit.yaml"
   "$CHART_DIR/values/auth.yaml"
   "$CHART_DIR/values/catalog.yaml"
   "$CHART_DIR/values/cart.yaml"
@@ -21,6 +20,7 @@ VALUES_FILES=(
   "$CHART_DIR/values/order.yaml"
   "$CHART_DIR/values/shipping.yaml"
   "$CHART_DIR/values/notification.yaml"
+  "$CHART_DIR/values/audit.yaml"
   "$CHART_DIR/values/gateway.yaml"
   "$CHART_DIR/values/kafka.yaml"
   "$CHART_DIR/values/postgres.yaml"
