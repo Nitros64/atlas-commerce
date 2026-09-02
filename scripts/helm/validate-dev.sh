@@ -8,6 +8,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 CHART_DIR="$PROJECT_ROOT/platform/helm/atlas-commerce"
 RENDER_OUTPUT="${TMPDIR:-/tmp}/atlas-dev-rendered.yaml"
+TERRAFORM_SHARED_TFVARS="$PROJECT_ROOT/platform/terraform/live/aws/shared/terraform.tfvars.example"
+WORKFLOWS_DIR="$PROJECT_ROOT/.github/workflows"
+DEV_ECR_REGISTRY="${ECR_REGISTRY:-000000000000.dkr.ecr.eu-central-1.amazonaws.com}"
 
 VALUES_FILES=(
   "$CHART_DIR/values/auth.yaml"
@@ -27,6 +30,7 @@ VALUES_FILES=(
   "$CHART_DIR/values/redis.yaml"
   "$CHART_DIR/values/ingress.yaml"
   "$CHART_DIR/values.dev.yaml"
+  "$CHART_DIR/values/images.dev.yaml"
 )
 
 HELM_ARGS=()
@@ -41,6 +45,7 @@ for file in "${VALUES_FILES[@]}"; do
 done
 
 DEV_SET_ARGS=(
+  "--set-string" "global.imageRegistry=$DEV_ECR_REGISTRY"
   "--set" "postgres.external.host=dummy-rds.atlas.local"
   "--set" "redis.external.host=dummy-redis.atlas.local"
   "--set" "redis.external.sslEnabled=true"
@@ -105,6 +110,92 @@ grep -q 'subPath: kafka' "$RENDER_OUTPUT" \
     echo "ERROR: expected Kafka volumeMount subPath=kafka was not rendered." >&2
     exit 1
   }
+
+echo ""
+echo "Checking canonical DEV service images..."
+
+IMAGE_NAMES=(
+  auth-service
+  catalog-service
+  cart-service
+  pricing-service
+  coupon-service
+  inventory-service
+  payment-service
+  order-service
+  shipping-service
+  notification-service
+  audit-service
+  api-gateway
+)
+
+rendered_registry_image_count="$(
+  grep -Fc "image: \"$DEV_ECR_REGISTRY/atlas-commerce/" "$RENDER_OUTPUT" || true
+)"
+terraform_repository_count="$(
+  awk '/repository_names = \[/,/^\]/' "$TERRAFORM_SHARED_TFVARS" \
+    | grep -Ec '^[[:space:]]*"[^"]+",?[[:space:]]*$' \
+    || true
+)"
+workflow_image_count="$(
+  grep -hE 'docker-image-name:[[:space:]]*[A-Za-z0-9-]+[[:space:]]*$' \
+    "$WORKFLOWS_DIR"/*-service-ci.yml \
+    | wc -l \
+    | tr -d '[:space:]'
+)"
+
+if [[ "$rendered_registry_image_count" -ne 12 ]]; then
+  echo "ERROR: expected exactly 12 ECR service images, found $rendered_registry_image_count." >&2
+  exit 1
+fi
+
+if [[ "$terraform_repository_count" -ne 12 ]]; then
+  echo "ERROR: expected exactly 12 Terraform ECR repositories, found $terraform_repository_count." >&2
+  exit 1
+fi
+
+if [[ "$workflow_image_count" -ne 12 ]]; then
+  echo "ERROR: expected exactly 12 CI workflow images, found $workflow_image_count." >&2
+  exit 1
+fi
+
+for image_name in "${IMAGE_NAMES[@]}"; do
+  expected_prefix="image: \"$DEV_ECR_REGISTRY/atlas-commerce/$image_name:"
+  rendered_count="$(grep -Fc "$expected_prefix" "$RENDER_OUTPUT" || true)"
+
+  if [[ "$rendered_count" -ne 1 ]]; then
+    echo "ERROR: expected exactly one DEV image for $image_name, found $rendered_count." >&2
+    exit 1
+  fi
+
+  terraform_count="$(
+    grep -Ec "^[[:space:]]*\"$image_name\",?[[:space:]]*$" "$TERRAFORM_SHARED_TFVARS" || true
+  )"
+
+  if [[ "$terraform_count" -ne 1 ]]; then
+    echo "ERROR: expected exactly one Terraform ECR repository for $image_name, found $terraform_count." >&2
+    exit 1
+  fi
+
+  workflow_count="$(
+    grep -hE "docker-image-name:[[:space:]]*$image_name[[:space:]]*$" \
+      "$WORKFLOWS_DIR"/*-service-ci.yml \
+      | wc -l \
+      | tr -d '[:space:]'
+  )"
+
+  if [[ "$workflow_count" -ne 1 ]]; then
+    echo "ERROR: expected exactly one CI workflow image for $image_name, found $workflow_count." >&2
+    exit 1
+  fi
+done
+
+if grep -Eq 'image:[[:space:]]*"?nitros64/' "$RENDER_OUTPUT"; then
+  echo "ERROR: DEV render contains a public nitros64 application image." >&2
+  exit 1
+fi
+
+echo "Validated 12 DEV service images across Helm, Terraform and CI."
 
 echo ""
 echo "DEV Helm validation passed."

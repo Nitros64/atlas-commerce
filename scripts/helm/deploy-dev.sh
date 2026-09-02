@@ -8,6 +8,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 CHART_DIR="$PROJECT_ROOT/platform/helm/atlas-commerce"
 TERRAFORM_DIR="$PROJECT_ROOT/platform/terraform/live/aws/dev"
+AWS_REGION="${AWS_REGION:-eu-central-1}"
+AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:-$(aws sts get-caller-identity --query Account --output text)}"
+ECR_REGISTRY="${ECR_REGISTRY:-$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com}"
 
 POSTGRES_HOST="$(terraform -chdir="$TERRAFORM_DIR" output -raw rds_postgresql_address)"
 REDIS_HOST="$(terraform -chdir="$TERRAFORM_DIR" output -raw redis_primary_endpoint)"
@@ -33,6 +36,7 @@ VALUES_FILES=(
   "$CHART_DIR/values/redis.yaml"
   "$CHART_DIR/values/ingress.yaml"
   "$CHART_DIR/values.dev.yaml"
+  "$CHART_DIR/values/images.dev.yaml"
 )
 
 HELM_ARGS=()
@@ -52,6 +56,7 @@ echo "PostgreSQL RDS:  $POSTGRES_HOST"
 echo "Redis endpoint:  $REDIS_HOST"
 echo "Platform secret: $PLATFORM_SECRET_NAME"
 echo "RDS admin secret: $RDS_MASTER_SECRET_ARN"
+echo "ECR registry:     $ECR_REGISTRY"
 echo ""
 
 kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
@@ -60,6 +65,7 @@ helm upgrade --install "$RELEASE_NAME" "$CHART_DIR" \
   -n "$NAMESPACE" \
   --create-namespace \
   "${HELM_ARGS[@]}" \
+  --set-string global.imageRegistry="$ECR_REGISTRY" \
   --set postgres.external.host="$POSTGRES_HOST" \
   --set redis.external.host="$REDIS_HOST" \
   --set redis.external.host="$REDIS_HOST" \

@@ -1,3 +1,6 @@
+global:
+  imageRegistry: ""
+
 auth:
   enabled: false
 

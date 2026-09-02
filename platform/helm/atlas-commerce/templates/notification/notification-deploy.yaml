@@ -28,7 +28,7 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.notification.deployment.terminationGracePeriodSeconds }}
       containers:
         - name: {{ .Values.notification.labels.app }}
-          image: "{{ .Values.notification.deployment.image.repository }}:{{ .Values.notification.deployment.image.tag }}"
+          image: "{{ if .Values.global.imageRegistry }}{{ .Values.global.imageRegistry }}/{{ end }}{{ .Values.notification.deployment.image.repository }}:{{ .Values.notification.deployment.image.tag }}"
           imagePullPolicy: {{ .Values.notification.deployment.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.notification.deployment.containerPort }}

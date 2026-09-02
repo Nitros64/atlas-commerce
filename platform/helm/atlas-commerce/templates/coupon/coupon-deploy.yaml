@@ -26,7 +26,7 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.coupon.deployment.terminationGracePeriodSeconds }}
       containers:
         - name: {{ .Values.coupon.labels.app }}
-          image: "{{ .Values.coupon.deployment.image.repository }}:{{ .Values.coupon.deployment.image.tag }}"
+          image: "{{ if .Values.global.imageRegistry }}{{ .Values.global.imageRegistry }}/{{ end }}{{ .Values.coupon.deployment.image.repository }}:{{ .Values.coupon.deployment.image.tag }}"
           imagePullPolicy: {{ .Values.coupon.deployment.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.coupon.deployment.containerPort }}

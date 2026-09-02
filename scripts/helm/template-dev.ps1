@@ -6,6 +6,11 @@ $Namespace = "atlas"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = (Resolve-Path (Join-Path $ScriptDir "../..")).Path
 $ChartDir = Join-Path $ProjectRoot "platform/helm/atlas-commerce"
+$DevEcrRegistry = if ($env:ECR_REGISTRY) {
+    $env:ECR_REGISTRY
+} else {
+    "000000000000.dkr.ecr.eu-central-1.amazonaws.com"
+}
 
 $ValuesFiles = @(
     "$ChartDir/values/auth.yaml",
@@ -24,7 +29,8 @@ $ValuesFiles = @(
     "$ChartDir/values/postgres.yaml",
     "$ChartDir/values/redis.yaml",
     "$ChartDir/values/ingress.yaml",
-    "$ChartDir/values.dev.yaml"
+    "$ChartDir/values.dev.yaml",
+    "$ChartDir/values/images.dev.yaml"
 )
 
 Write-Host "Rendering Helm chart for DEV..."
@@ -46,4 +52,5 @@ foreach ($file in $ValuesFiles) {
 
 helm template $ReleaseName $ChartDir `
     -n $Namespace `
-    @HelmArgs
+    @HelmArgs `
+    --set-string "global.imageRegistry=$DevEcrRegistry"

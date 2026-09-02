@@ -12,8 +12,9 @@ Only these profiles are currently supported:
   disabled. It is used to verify the chart contract.
 - local: component values, local overrides, ignored local secrets and the
   local-lite overlay.
-- dev: component values followed by values.dev.yaml. Runtime endpoints and
-  secret identifiers are supplied by the dev validation/deployment scripts.
+- dev: component values followed by values.dev.yaml and
+  values/images.dev.yaml. Runtime endpoints, secret identifiers and the ECR
+  registry are supplied by the dev validation/deployment scripts.
 
 QA and production are roadmap placeholders. Their values files are intentionally
 not part of the supported or validated matrix.
@@ -51,9 +52,13 @@ Local then appends:
 Dev appends:
 
 17. values.dev.yaml
+18. values/images.dev.yaml
 
-The image promotion overlay is deliberately outside this delivery and will be
-connected to dev when the image-source issue is implemented.
+The image overlay stores portable repository paths and immutable tags. Dev
+scripts set global.imageRegistry. Template and validation scripts use a
+deterministic placeholder ECR registry unless ECR_REGISTRY is provided.
+deploy-dev.sh derives the real registry from the active AWS account and
+AWS_REGION, both of which can also be supplied explicitly.
 
 ## Validation
 
