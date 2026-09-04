@@ -11,7 +11,9 @@ on:
       - "platform/terraform/live/aws/shared/terraform.tfvars.example"
       - "scripts/helm/**"
       - "scripts/argocd/**"
+      - "scripts/gitops/**"
       - ".github/workflows/*-service-ci.yml"
+      - ".github/workflows/promote-dev-image.yml"
       - ".github/workflows/platform-ci.yml"
   push:
     branches: [master]
@@ -21,7 +23,9 @@ on:
       - "platform/terraform/live/aws/shared/terraform.tfvars.example"
       - "scripts/helm/**"
       - "scripts/argocd/**"
+      - "scripts/gitops/**"
       - ".github/workflows/*-service-ci.yml"
+      - ".github/workflows/promote-dev-image.yml"
       - ".github/workflows/platform-ci.yml"
   workflow_dispatch:
 
@@ -79,3 +83,11 @@ jobs:
       - name: Validate Argo CD DEV foundation
         shell: bash
         run: bash scripts/argocd/validate-argocd-dev.sh
+
+      - name: Validate DEV image promotion contract
+        shell: bash
+        run: |
+          python scripts/gitops/promote-dev-image.py \
+            --service auth \
+            --image-tag sha-0000000000000000000000000000000000000000-1-1 \
+            --check

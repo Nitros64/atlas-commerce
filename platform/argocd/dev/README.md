@@ -48,6 +48,25 @@ There is intentionally no `automated` sync policy. Auto-sync may be introduced
 later, initially without prune. CI must never receive kubeconfig or invoke the
 Argo CD API; CI only performs offline validation.
 
+## Promote one DEV image
+
+Run the **Promote DEV image** workflow manually from GitHub Actions. Select one
+of the twelve active services and enter the immutable ECR tag emitted by its
+service CI, for example `sha-<40-character-commit>-<run-id>-<attempt>`.
+
+The workflow is protected by the GitHub `dev` Environment. It validates the
+service and tag, changes exactly one `tag` in
+`values/images.dev.yaml`, and opens a pull request against `master`. It uses
+only `contents: write` and `pull-requests: write`; it has no AWS, OIDC or cluster
+permissions. The repository setting **Allow GitHub Actions to create and
+approve pull requests** must be enabled. Pull-request checks created with the
+repository token may require approval from a user with write access.
+
+Merging the pull request changes desired state in Git. Argo CD notices the new
+commit and performs the deployment; the promotion workflow never performs a
+deployment itself. Automated rollback is intentionally deferred. Until then,
+revert a promotion with a normal `git revert` and let Argo CD reconcile Git.
+
 ## Ownership and ordering
 
 The chart temporarily owns `ClusterSecretStore/aws-secrets-manager` because
