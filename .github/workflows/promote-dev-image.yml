@@ -1,0 +1,119 @@
+name: Promote DEV image
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: Atlas service to promote
+        required: true
+        type: choice
+        options:
+          - auth
+          - catalog
+          - cart
+          - pricing
+          - coupon
+          - inventory
+          - payment
+          - order
+          - shipping
+          - notification
+          - audit
+          - gateway
+      image_tag:
+        description: Immutable ECR tag produced by service CI (sha-<commit>-<run>-<attempt>)
+        required: true
+        type: string
+
+# This workflow only writes a promotion branch and opens its pull request.
+# It has no AWS or cluster permissions.
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  promote:
+    name: Promote ${{ inputs.service }} to DEV
+    runs-on: ubuntu-latest
+    environment: dev
+    concurrency:
+      group: promote-dev-${{ inputs.service }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Update exactly one DEV image tag
+        env:
+          SERVICE: ${{ inputs.service }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          python scripts/gitops/promote-dev-image.py \
+            --service "$SERVICE" \
+            --image-tag "$IMAGE_TAG"
+
+      - name: Verify minimal promotion diff
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -t changed_files < <(git diff --name-only)
+          if [[ "${#changed_files[@]}" -ne 1 ]] \
+            || [[ "${changed_files[0]}" != "platform/helm/atlas-commerce/values/images.dev.yaml" ]]; then
+            echo "ERROR: promotion must change only values/images.dev.yaml." >&2
+            git diff --name-only >&2
+            exit 1
+          fi
+
+          read -r added deleted path < <(git diff --numstat -- \
+            platform/helm/atlas-commerce/values/images.dev.yaml)
+
+          if [[ "$added" -ne 1 || "$deleted" -ne 1 ]]; then
+            echo "ERROR: promotion must replace exactly one image tag line." >&2
+            git diff -- platform/helm/atlas-commerce/values/images.dev.yaml >&2
+            exit 1
+          fi
+
+          git diff --check
+
+      - name: Create promotion branch and commit
+        id: commit
+        shell: bash
+        env:
+          SERVICE: ${{ inputs.service }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          set -euo pipefail
+
+          branch_name="promote/dev/${SERVICE}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch_name"
+          git add platform/helm/atlas-commerce/values/images.dev.yaml
+          git commit -m "chore(dev): promote ${SERVICE} to ${IMAGE_TAG}"
+          git push --set-upstream origin "$branch_name"
+          echo "branch=$branch_name" >> "$GITHUB_OUTPUT"
+
+      - name: Open promotion pull request
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH_NAME: ${{ steps.commit.outputs.branch }}
+          SERVICE: ${{ inputs.service }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          set -euo pipefail
+
+          gh pr create \
+            --base master \
+            --head "$BRANCH_NAME" \
+            --title "chore(dev): promote ${SERVICE} image" \
+            --body "Promotes **${SERVICE}** in DEV to immutable tag \`${IMAGE_TAG}\`.
+
+          This PR changes only the canonical DEV image tag. After merge, Argo CD reconciles the desired state from Git.
+
+          Rollback remains a normal \`git revert\` of the promotion commit."
