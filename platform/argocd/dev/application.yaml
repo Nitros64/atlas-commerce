@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: atlas-dev
+  namespace: argocd
+spec:
+  project: atlas-dev
+  source:
+    repoURL: https://github.com/Nitros64/atlas-commerce.git
+    targetRevision: master
+    path: platform/helm/atlas-commerce
+    helm:
+      releaseName: atlas
+      valueFiles:
+        - values/auth.yaml
+        - values/catalog.yaml
+        - values/cart.yaml
+        - values/pricing.yaml
+        - values/coupon.yaml
+        - values/inventory.yaml
+        - values/payment.yaml
+        - values/order.yaml
+        - values/shipping.yaml
+        - values/notification.yaml
+        - values/audit.yaml
+        - values/gateway.yaml
+        - values/kafka.yaml
+        - values/postgres.yaml
+        - values/redis.yaml
+        - values/ingress.yaml
+        - values.dev.yaml
+        - values/images.dev.yaml
+      # These infrastructure outputs are non-secret, but must be replaced in Git
+      # with the current DEV values before the first manual synchronization.
+      values: |
+        global:
+          imageRegistry: 529601496188.dkr.ecr.eu-central-1.amazonaws.com
+        postgres:
+          external:
+            host: REPLACE_WITH_RDS_ENDPOINT
+          bootstrap:
+            adminSecret:
+              remoteKey: REPLACE_WITH_RDS_MASTER_SECRET_ARN
+        redis:
+          external:
+            host: REPLACE_WITH_REDIS_ENDPOINT
+        catalog:
+          redis:
+            host: REPLACE_WITH_REDIS_ENDPOINT
+        gateway:
+          env:
+            redisHost: REPLACE_WITH_REDIS_ENDPOINT
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: atlas
+  syncPolicy:
+    # Synchronization remains manual in this delivery. CreateNamespace is safe
+    # and does not enable automatic pruning or self-healing.
+    syncOptions:
+      - CreateNamespace=true

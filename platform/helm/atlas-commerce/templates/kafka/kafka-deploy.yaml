@@ -4,6 +4,8 @@ kind: Deployment
 metadata:
   name: {{ .Values.kafka.deployment.name }}
   namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
   labels:
     app: {{ .Values.kafka.labels.app }}
 spec:

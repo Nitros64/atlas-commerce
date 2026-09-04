@@ -1,0 +1,40 @@
+{{- if and (not .Values.postgres.enabled) .Values.postgres.bootstrap.enabled .Values.postgres.external.host .Values.postgres.bootstrap.adminSecret.remoteKey }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: postgres-bootstrap
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-20"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: postgres-bootstrap-secret-reader
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-20"
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames:
+      - {{ .Values.postgres.bootstrap.adminSecret.name }}
+      - {{ .Values.postgres.bootstrap.appPasswordSecretName }}
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: postgres-bootstrap-secret-reader
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-20"
+subjects:
+  - kind: ServiceAccount
+    name: postgres-bootstrap
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: postgres-bootstrap-secret-reader
+{{- end }}

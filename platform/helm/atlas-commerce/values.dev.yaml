@@ -51,6 +51,11 @@ postgres:
     image: postgres:17-alpine
     backoffLimit: 3
 
+    secretWait:
+      image: curlimages/curl:8.12.1
+      timeoutSeconds: 180
+      intervalSeconds: 5
+
     adminSecret:
       name: postgres-admin-secret
       remoteKey: ""
