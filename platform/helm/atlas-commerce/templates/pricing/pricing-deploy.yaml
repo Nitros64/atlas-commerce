@@ -4,6 +4,8 @@ kind: Deployment
 metadata:
   name: {{ .Values.pricing.deployment.name }}
   namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
   labels:
     app: {{ .Values.pricing.labels.app }}
 spec:

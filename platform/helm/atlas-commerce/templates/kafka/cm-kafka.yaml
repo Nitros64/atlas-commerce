@@ -4,6 +4,8 @@ kind: ConfigMap
 metadata:
   name: {{ .Values.kafka.configMapName }}
   namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 data:
   SPRING_KAFKA_BOOTSTRAP_SERVERS: {{ .Values.kafka.bootstrapServers | quote }}
   ORDER_EVENTS_TOPIC: {{ .Values.kafka.orderEventsTopic | quote }}

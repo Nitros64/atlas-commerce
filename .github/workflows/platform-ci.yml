@@ -1,22 +1,26 @@
 name: Platform CI
 
 on:
-  # Este workflow solo se activa cuando cambian Helm, sus scripts o el CI que
-  # determina las imágenes. No requiere credenciales AWS ni acceso a un cluster.
+  # Este workflow solo se activa cuando cambian Helm, Argo CD, sus scripts o el
+  # CI que determina imágenes. No usa credenciales AWS ni accede a un cluster.
   pull_request:
     branches: [master]
     paths:
       - "platform/helm/**"
+      - "platform/argocd/**"
       - "platform/terraform/live/aws/shared/terraform.tfvars.example"
       - "scripts/helm/**"
+      - "scripts/argocd/**"
       - ".github/workflows/*-service-ci.yml"
       - ".github/workflows/platform-ci.yml"
   push:
     branches: [master]
     paths:
       - "platform/helm/**"
+      - "platform/argocd/**"
       - "platform/terraform/live/aws/shared/terraform.tfvars.example"
       - "scripts/helm/**"
+      - "scripts/argocd/**"
       - ".github/workflows/*-service-ci.yml"
       - ".github/workflows/platform-ci.yml"
   workflow_dispatch:
@@ -26,8 +30,8 @@ permissions:
   contents: read
 
 jobs:
-  helm:
-    name: Validate Helm profiles
+  platform:
+    name: Validate Helm and Argo CD
     runs-on: ubuntu-latest
 
     steps:
@@ -38,6 +42,11 @@ jobs:
         uses: azure/setup-helm@v5.0.0
         with:
           version: v3.18.4
+
+      - name: Set up kubectl for offline Kustomize validation
+        uses: azure/setup-kubectl@v5.1.0
+        with:
+          version: v1.32.0
 
       - name: Validate base profile
         # Comprueba los defaults del chart y renderiza los manifests base.
@@ -66,3 +75,7 @@ jobs:
         # Helm, Terraform shared/ECR y los workflows de servicios.
         shell: bash
         run: bash scripts/helm/validate-dev.sh
+
+      - name: Validate Argo CD DEV foundation
+        shell: bash
+        run: bash scripts/argocd/validate-argocd-dev.sh

@@ -4,6 +4,8 @@ kind: ConfigMap
 metadata:
   name: {{ .Values.kafka.brokerConfigMapName }}
   namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 data:
   KAFKA_NODE_ID: {{ .Values.kafka.brokerConfig.nodeId | quote }}
   KAFKA_PROCESS_ROLES: {{ .Values.kafka.brokerConfig.processRoles | quote }}

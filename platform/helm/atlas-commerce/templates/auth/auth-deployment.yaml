@@ -4,6 +4,8 @@ kind: Deployment
 metadata:
   name: {{ .Values.auth.deployment.name }}
   namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
   labels:
     app: {{ .Values.auth.labels.app }}
     tier: {{ .Values.auth.labels.tier }}

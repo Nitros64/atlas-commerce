@@ -4,6 +4,8 @@ kind: Service
 metadata:
   name: {{ .Values.kafka.service.name }}
   namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 spec:
   type: {{ .Values.kafka.service.type }}
   selector:

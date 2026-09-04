@@ -8,6 +8,7 @@ metadata:
     app.kubernetes.io/name: atlas-ingress
     app.kubernetes.io/component: ingress
   annotations:
+    argocd.argoproj.io/sync-wave: "30"
 {{- with .Values.ingress.annotations }}
 {{ toYaml . | indent 4 }}
 {{- end }}

@@ -4,6 +4,10 @@ kind: Job
 metadata:
   name: postgres-bootstrap
   namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "-10"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
 spec:
   backoffLimit: {{ .Values.postgres.bootstrap.backoffLimit | default 3 }}
   template:
@@ -11,7 +15,79 @@ spec:
       labels:
         app: postgres-bootstrap
     spec:
+      serviceAccountName: postgres-bootstrap
       restartPolicy: OnFailure
+      initContainers:
+        - name: wait-for-bootstrap-secrets
+          image: {{ .Values.postgres.bootstrap.secretWait.image | quote }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: WAIT_TIMEOUT_SECONDS
+              value: {{ .Values.postgres.bootstrap.secretWait.timeoutSeconds | quote }}
+            - name: WAIT_INTERVAL_SECONDS
+              value: {{ .Values.postgres.bootstrap.secretWait.intervalSeconds | quote }}
+          command:
+            - sh
+            - -ec
+            - |
+              api="https://kubernetes.default.svc"
+              token="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+              ca="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+
+              wait_for_secret() {
+                secret_name="$1"
+                shift
+                elapsed=0
+
+                while [ "$elapsed" -lt "$WAIT_TIMEOUT_SECONDS" ]; do
+                  response_file="/tmp/${secret_name}.json"
+                  status="$(curl --silent --show-error \
+                    --cacert "$ca" \
+                    --header "Authorization: Bearer $token" \
+                    --output "$response_file" \
+                    --write-out '%{http_code}' \
+                    "$api/api/v1/namespaces/$POD_NAMESPACE/secrets/$secret_name")"
+
+                  if [ "$status" = "200" ]; then
+                    missing_key=""
+                    for key in "$@"; do
+                      if ! grep -q "\"$key\":" "$response_file"; then
+                        missing_key="$key"
+                        break
+                      fi
+                    done
+
+                    if [ -z "$missing_key" ]; then
+                      echo "Secret $secret_name is ready"
+                      return 0
+                    fi
+
+                    echo "Secret $secret_name exists but key $missing_key is missing"
+                  elif [ "$status" != "404" ]; then
+                    echo "ERROR: Kubernetes API returned HTTP $status for Secret $secret_name" >&2
+                    cat "$response_file" >&2
+                    return 1
+                  else
+                    echo "Waiting for Secret $secret_name"
+                  fi
+
+                  sleep "$WAIT_INTERVAL_SECONDS"
+                  elapsed=$((elapsed + WAIT_INTERVAL_SECONDS))
+                done
+
+                echo "ERROR: Timed out waiting for Secret $secret_name after ${WAIT_TIMEOUT_SECONDS}s" >&2
+                cat "/tmp/${secret_name}.json" >&2 2>/dev/null || true
+                return 1
+              }
+
+              wait_for_secret {{ .Values.postgres.bootstrap.adminSecret.name | quote }} \
+                POSTGRES_ADMIN_USER POSTGRES_ADMIN_PASSWORD
+              wait_for_secret {{ .Values.postgres.bootstrap.appPasswordSecretName | quote }} \
+                {{ .Values.postgres.bootstrap.appPasswordSecretKey | quote }}
       containers:
         - name: postgres-bootstrap
           image: {{ .Values.postgres.bootstrap.image | quote }}

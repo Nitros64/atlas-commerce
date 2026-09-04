@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: atlas-dev
+  namespace: argocd
+spec:
+  description: Restricted project for the Atlas Commerce DEV environment.
+  sourceRepos:
+    - https://github.com/Nitros64/atlas-commerce.git
+  destinations:
+    - namespace: atlas
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: external-secrets.io
+      kind: ClusterSecretStore
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  orphanedResources:
+    warn: true
