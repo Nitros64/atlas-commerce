@@ -13,13 +13,15 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 0
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: {{ .Values.inventory.labels.app }}
   template:
     metadata:
+      annotations:
+        checksum/config-inventory: {{ include (print $.Template.BasePath "/inventory/cm-inventory.yaml") . | sha256sum }}
       labels:
         app: {{ .Values.inventory.labels.app }}
         tier: {{ .Values.inventory.labels.tier }}

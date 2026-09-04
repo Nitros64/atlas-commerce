@@ -83,5 +83,6 @@ auth:
       failureThreshold: 6
 
   pdb:
-    enabled: true
+    # Enable only in a profile with enough replicas to tolerate minAvailable.
+    enabled: false
     minAvailable: 1

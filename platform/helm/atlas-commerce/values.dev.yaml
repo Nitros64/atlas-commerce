@@ -93,3 +93,8 @@ redis:
 kafka:
   pvc:
     storageClassName: gp2
+
+# DEV has no ingress controller. Operators access the ClusterIP gateway with
+# port-forward; no public LoadBalancer is created.
+ingress:
+  enabled: false

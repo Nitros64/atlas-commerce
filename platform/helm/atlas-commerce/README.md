@@ -60,6 +60,14 @@ deterministic placeholder ECR registry unless ECR_REGISTRY is provided.
 deploy-dev.sh derives the real registry from the active AWS account and
 AWS_REGION, both of which can also be supplied explicitly.
 
+`values/local-lite.yaml` is intentionally a scale-to-zero overlay. It keeps
+the payment, shipping and audit Services, ConfigMaps and Secrets rendered, but
+sets their Deployment replicas to zero; it does not remove those components.
+
+DEV explicitly disables the nginx Ingress because this repository does not
+install an ingress controller. Use a local port-forward to the ClusterIP
+gateway as documented in `docs/runbooks/atlas-dev-eks-runtime.md`.
+
 ## Validation
 
 Base:

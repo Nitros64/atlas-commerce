@@ -117,7 +117,12 @@ assert_wave_count -20 16
 assert_wave_count -10 1
 assert_wave_count 10 5
 assert_wave_count 20 11
-assert_wave_count 30 2
+assert_wave_count 30 1
+
+if grep -q '^kind: Ingress$' "$HELM_RENDER"; then
+  echo "ERROR: DEV must not render an Ingress without a controller." >&2
+  exit 1
+fi
 
 grep -q 'argocd.argoproj.io/hook: Sync' "$HELM_RENDER"
 grep -q 'argocd.argoproj.io/hook-delete-policy: BeforeHookCreation' "$HELM_RENDER"
