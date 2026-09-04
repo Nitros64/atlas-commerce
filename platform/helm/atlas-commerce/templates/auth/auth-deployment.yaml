@@ -15,13 +15,17 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 0
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: {{ .Values.auth.labels.app }}
   template:
     metadata:
+      annotations:
+        checksum/config-auth: {{ include (print $.Template.BasePath "/auth/configmap-auth.yaml") . | sha256sum }}
+        checksum/config-datasource: {{ include (print $.Template.BasePath "/auth/configmap-datasource.yaml") . | sha256sum }}
+        checksum/config-redis: {{ include (print $.Template.BasePath "/redis/cm-redis.yaml") . | sha256sum }}
       labels:
         app: {{ .Values.auth.labels.app }}
         tier: {{ .Values.auth.labels.tier }}

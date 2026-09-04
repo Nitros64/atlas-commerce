@@ -13,13 +13,16 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 0
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: {{ .Values.catalog.labels.app }}
   template:
     metadata:
+      annotations:
+        checksum/config-catalog: {{ include (print $.Template.BasePath "/catalog/cm-catalog.yaml") . | sha256sum }}
+        checksum/config-kafka: {{ include (print $.Template.BasePath "/kafka/cm-kafka.yaml") . | sha256sum }}
       labels:
         app: {{ .Values.catalog.labels.app }}
         tier: {{ .Values.catalog.labels.tier }}

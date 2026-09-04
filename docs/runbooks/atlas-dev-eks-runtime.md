@@ -66,7 +66,10 @@ Este script ejecuta el ciclo completo:
 7. Escala el nodegroup DEV a 3 nodos.
 8. Valida el render de Helm DEV.
 9. Despliega Atlas con Helm.
-10. Ejecuta el smoke check del runtime.
+10. Ejecuta el chequeo estructural del runtime (rollouts, pods y configuración).
+
+La prueba HTTP funcional se ejecuta manualmente después, mediante el
+port-forward descrito en la sección 10.
 
 ### Validar runtime
 
@@ -154,6 +157,7 @@ scripts/helm/validate-dev.sh
 
 ```text
 scripts/k8s/check-dev-runtime.sh
+scripts/smoke/dev-smoke.sh
 ```
 
 ---
@@ -637,3 +641,71 @@ Preferir siempre:
 ```bash
 ./scripts/aws/destroy-dev-now.sh
 ```
+
+---
+
+## 10. Acceso funcional y smoke HTTP
+
+DEV no renderiza `atlas-ingress`: el repositorio no instala un controlador
+nginx y tampoco crea un `LoadBalancer`. El gateway permanece privado como
+`ClusterIP`. Desde una estación de operador con kubeconfig de DEV, abrir un
+port-forward en una terminal:
+
+```bash
+kubectl -n atlas port-forward service/gateway-service 18080:80
+```
+
+En otra terminal, ejecutar:
+
+```bash
+bash scripts/smoke/dev-smoke.sh
+```
+
+El script usa `http://127.0.0.1:18080` por defecto y comprueba, con reintentos
+acotados:
+
+1. que el readiness del gateway responde HTTP 200 con estado `UP`;
+2. que el gateway enruta `GET /api/v1/auth/ping` y recibe `auth-service up`.
+
+La segunda comprobación valida tráfico HTTP real entre gateway y auth; no se
+limita a mirar pods `Ready`. No crea usuarios ni otros datos. Ante cualquier
+fallo muestra URL, estado y respuesta, y termina con código distinto de cero.
+
+Puede apuntarse a otra ruta sin modificar el script:
+
+```bash
+BASE_URL=http://gateway-service bash scripts/smoke/dev-smoke.sh
+```
+
+Este contrato permite envolver el script en un Job `PostSync` de Argo CD más
+adelante. Esta entrega no crea ese hook.
+
+### Rollback manual de una promoción
+
+La imagen deseada vive en Git. Para revertir una promoción, revertir el commit
+que cambió `values/images.dev.yaml`, publicar el revert mediante PR y dejar que
+Argo CD vuelva a reconciliar ese estado:
+
+```bash
+git revert <commit-de-la-promocion>
+git push origin <rama-de-rollback>
+```
+
+Mientras DEV conserve sincronización manual, un operador debe sincronizar la
+aplicación tras fusionar el revert. No hay rollback automático en esta entrega.
+
+### Significado de local-lite
+
+`values/local-lite.yaml` no elimina componentes. Mantiene Services, ConfigMaps
+y Secrets, pero escala a cero los Deployments de payment, shipping y audit.
+
+### Rollout con una réplica
+
+Los doce Deployments de aplicación usan `maxUnavailable: 0` y `maxSurge: 1`:
+el pod anterior sigue disponible hasta que el nuevo esté listo. Esto requiere
+capacidad temporal para un pod adicional durante cada actualización. Kafka no
+usa esa estrategia porque su PVC singleton necesita un tratamiento separado.
+
+El PDB de auth queda disponible mediante `auth.pdb.enabled`, pero desactivado
+por defecto: `minAvailable: 1` con una sola réplica bloquearía disrupciones
+voluntarias como el drenado de un nodo.

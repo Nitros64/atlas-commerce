@@ -13,13 +13,15 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 0
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: {{ .Values.payment.labels.app }}
   template:
     metadata:
+      annotations:
+        checksum/config-payment: {{ include (print $.Template.BasePath "/payment/cm-payment.yaml") . | sha256sum }}
       labels:
         app: {{ .Values.payment.labels.app }}
         tier: {{ .Values.payment.labels.tier }}

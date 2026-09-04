@@ -13,13 +13,15 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 0
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: {{ .Values.cart.labels.app }}
   template:
     metadata:
+      annotations:
+        checksum/config-cart: {{ include (print $.Template.BasePath "/cart/cm-cart.yaml") . | sha256sum }}
       labels:
         app: {{ .Values.cart.labels.app }}
         tier: {{ .Values.cart.labels.tier }}

@@ -111,6 +111,21 @@ grep -q 'subPath: kafka' "$RENDER_OUTPUT" \
     exit 1
   }
 
+if grep -q '^kind: Ingress$' "$RENDER_OUTPUT"; then
+  echo "ERROR: DEV must not render an Ingress without a controller." >&2
+  exit 1
+fi
+
+max_unavailable_count="$(grep -c 'maxUnavailable: 0' "$RENDER_OUTPUT" || true)"
+max_surge_count="$(grep -c 'maxSurge: 1' "$RENDER_OUTPUT" || true)"
+
+if [[ "$max_unavailable_count" -ne 12 || "$max_surge_count" -ne 12 ]]; then
+  echo "ERROR: expected rollout strategy maxUnavailable=0/maxSurge=1 for 12 application Deployments." >&2
+  exit 1
+fi
+
+echo "Validated private DEV access and zero-downtime application rollout settings."
+
 echo ""
 echo "Checking canonical DEV service images..."
 

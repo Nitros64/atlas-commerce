@@ -1,3 +1,6 @@
+# This overlay is scale-to-zero, not resource removal. It keeps Services,
+# ConfigMaps and Secrets rendered so the three Deployments can be re-enabled
+# by changing only their replica counts.
 payment:
   deployment:
     replicas: 0

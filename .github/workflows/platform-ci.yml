@@ -12,6 +12,7 @@ on:
       - "scripts/helm/**"
       - "scripts/argocd/**"
       - "scripts/gitops/**"
+      - "scripts/smoke/**"
       - ".github/workflows/*-service-ci.yml"
       - ".github/workflows/promote-dev-image.yml"
       - ".github/workflows/platform-ci.yml"
@@ -24,6 +25,7 @@ on:
       - "scripts/helm/**"
       - "scripts/argocd/**"
       - "scripts/gitops/**"
+      - "scripts/smoke/**"
       - ".github/workflows/*-service-ci.yml"
       - ".github/workflows/promote-dev-image.yml"
       - ".github/workflows/platform-ci.yml"
@@ -91,3 +93,7 @@ jobs:
             --service auth \
             --image-tag sha-0000000000000000000000000000000000000000-1-1 \
             --check
+
+      - name: Validate DEV smoke test syntax
+        shell: bash
+        run: bash -n scripts/smoke/dev-smoke.sh

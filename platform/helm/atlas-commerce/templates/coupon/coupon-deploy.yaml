@@ -13,13 +13,15 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 0
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: {{ .Values.coupon.labels.app }}
   template:
     metadata:
+      annotations:
+        checksum/config-coupon: {{ include (print $.Template.BasePath "/coupon/cm-coupon.yaml") . | sha256sum }}
       labels:
         app: {{ .Values.coupon.labels.app }}
         tier: {{ .Values.coupon.labels.tier }}

@@ -74,4 +74,5 @@ moving it to a separate platform application would expand this delivery. Its
 wave is `-30`, before the namespaced `ExternalSecret` resources at `-20`.
 The PostgreSQL bootstrap waits explicitly for generated Secrets and runs at
 `-10`. Kafka runs at `10`, backend deployments at `20`, and the gateway and
-Ingress at `30`.
+gateway at `30`. Ingress is disabled for DEV because no ingress controller is
+part of the supported platform; use the runbook's gateway port-forward.

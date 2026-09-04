@@ -13,13 +13,16 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 0
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: {{ .Values.gateway.labels.app }}
   template:
     metadata:
+      annotations:
+        checksum/secret-jwt: {{ include (print $.Template.BasePath "/jwt/secret.yaml") . | sha256sum }}
+        checksum/secret-redis: {{ include (print $.Template.BasePath "/redis/redis-secret.yaml") . | sha256sum }}
       labels:
         app: {{ .Values.gateway.labels.app }}
         tier: {{ .Values.gateway.labels.tier }}
