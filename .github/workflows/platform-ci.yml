@@ -1,0 +1,68 @@
+name: Platform CI
+
+on:
+  # Este workflow solo se activa cuando cambian Helm, sus scripts o el CI que
+  # determina las imágenes. No requiere credenciales AWS ni acceso a un cluster.
+  pull_request:
+    branches: [master]
+    paths:
+      - "platform/helm/**"
+      - "platform/terraform/live/aws/shared/terraform.tfvars.example"
+      - "scripts/helm/**"
+      - ".github/workflows/*-service-ci.yml"
+      - ".github/workflows/platform-ci.yml"
+  push:
+    branches: [master]
+    paths:
+      - "platform/helm/**"
+      - "platform/terraform/live/aws/shared/terraform.tfvars.example"
+      - "scripts/helm/**"
+      - ".github/workflows/*-service-ci.yml"
+      - ".github/workflows/platform-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  # Todas las validaciones son locales y solo necesitan leer el repositorio.
+  contents: read
+
+jobs:
+  helm:
+    name: Validate Helm profiles
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v5.0.0
+        with:
+          version: v3.18.4
+
+      - name: Validate base profile
+        # Comprueba los defaults del chart y renderiza los manifests base.
+        shell: bash
+        run: |
+          set -euo pipefail
+          helm lint platform/helm/atlas-commerce
+          helm template atlas platform/helm/atlas-commerce \
+            -n atlas \
+            --debug \
+            > "$RUNNER_TEMP/atlas-base.yaml"
+
+      - name: Validate local profile
+        # En CI se sustituye el archivo local ignorado por Git por un fixture
+        # ficticio y no sensible; el orden canónico de values lo conserva el script.
+        shell: bash
+        env:
+          LOCAL_SECRETS_FILE: ${{ github.workspace }}/platform/helm/atlas-commerce/values/secrets-local.example.yaml
+        run: |
+          set -euo pipefail
+          bash scripts/helm/template-local.sh \
+            > "$RUNNER_TEMP/atlas-local.txt"
+
+      - name: Validate dev profile
+        # El script valida lint/template y la paridad de las doce imágenes entre
+        # Helm, Terraform shared/ECR y los workflows de servicios.
+        shell: bash
+        run: bash scripts/helm/validate-dev.sh
