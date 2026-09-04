@@ -8,6 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 CHART_DIR="$PROJECT_ROOT/platform/helm/atlas-commerce"
+LOCAL_SECRETS_FILE="${LOCAL_SECRETS_FILE:-$CHART_DIR/values/secrets-local.yaml}"
 
 VALUES_FILES=(
   "$CHART_DIR/values/auth.yaml"
@@ -27,7 +28,7 @@ VALUES_FILES=(
   "$CHART_DIR/values/redis.yaml"  
   "$CHART_DIR/values/ingress.yaml"
   "$CHART_DIR/values.local.yaml"
-  "$CHART_DIR/values/secrets-local.yaml"
+  "$LOCAL_SECRETS_FILE"
   "$CHART_DIR/values/local-lite.yaml"
 )
 
@@ -47,6 +48,9 @@ for file in "${VALUES_FILES[@]}"; do
 
   HELM_ARGS+=("-f" "$file")
 done
+
+helm lint "$CHART_DIR" \
+  "${HELM_ARGS[@]}"
 
 helm template "$RELEASE_NAME" "$CHART_DIR" \
   -n "$NAMESPACE" \

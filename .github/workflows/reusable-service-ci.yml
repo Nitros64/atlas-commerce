@@ -24,109 +24,147 @@ on:
         required: false
         type: string
         default: 'CRITICAL,HIGH'
-
-permissions:
-  contents: read
-  checks: write
-  security-events: write
-  id-token: write
+    outputs:
+      image-uri:
+        description: Published ECR image URI. Empty outside a protected master push.
+        value: ${{ jobs.publish.outputs.image-uri }}
+      image-digest:
+        description: Published ECR manifest digest. Empty outside a protected master push.
+        value: ${{ jobs.publish.outputs.image-digest }}
 
 jobs:
-  build-test-and-push:
-    name: Build, Test and Push ${{ inputs.service-name }}
+  # Fase 1: valida código e imagen sin acceder a AWS.
+  # Este job también se ejecuta en PR y por eso no puede solicitar tokens OIDC.
+  verify:
+    name: Verify ${{ inputs.service-name }}
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: ${{ inputs.service-path }}
+    permissions:
+      # Lectura del repositorio, publicación de tests y carga del SARIF.
+      contents: read
+      checks: write
+      security-events: write
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-        # with:
-        #   fetch-depth: 0
-        #   token: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/checkout@v4.2.2
 
       - name: Set up Java ${{ inputs.java-version }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v4.9.1
         with:
           distribution: temurin
           java-version: ${{ inputs.java-version }}
           cache: maven
           cache-dependency-path: ${{ inputs.service-path }}/pom.xml
 
-      - name: Build and Test with Maven
+      - name: Build and test with Maven
+        working-directory: ${{ inputs.service-path }}
         run: mvn ${{ inputs.maven-goals }} -B --no-transfer-progress
 
+      # Buildx crea una única imagen Docker. Los pasos posteriores escanean y
+      # publican este mismo TAR; no se realiza una segunda construcción.
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v3.12.0
 
-      # ==================== TRIVY SECURITY SCAN ====================
-      - name: Build Docker Image (for scanning)
-        id: build
-        uses: docker/build-push-action@v6
+      - name: Build image once
+        uses: docker/build-push-action@v6.19.2
         with:
           context: ${{ inputs.service-path }}
           file: ${{ inputs.service-path }}/Dockerfile
           push: false
           tags: ${{ inputs.docker-image-name }}:ci
-          outputs: type=docker,dest=/tmp/${{ inputs.docker-image-name }}.tar
+          outputs: type=docker,dest=${{ runner.temp }}/${{ inputs.docker-image-name }}.tar
 
-      - name: Run Trivy Vulnerability Scanner
-        uses: aquasecurity/trivy-action@master
+      - name: Create image artifact checksum
+        # El checksum solo es necesario cuando la imagen puede llegar a ECR.
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        working-directory: ${{ runner.temp }}
+        run: sha256sum "${{ inputs.docker-image-name }}.tar" > "${{ inputs.docker-image-name }}.tar.sha256"
+
+      # Primer escaneo: genera SARIF para que los hallazgos sean visibles en
+      # GitHub Security, pero no decide por sí solo si el job debe fallar.
+      - name: Run Trivy SARIF scan
+        uses: aquasecurity/trivy-action@0.36.0
         with:
-          input: /tmp/${{ inputs.docker-image-name }}.tar
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+          input: ${{ runner.temp }}/${{ inputs.docker-image-name }}.tar
+          format: sarif
+          output: ${{ github.workspace }}/trivy-results.sarif
           severity: ${{ inputs.trivy-severity }}
-          exit-code: '0'           # '0' for warning
+          exit-code: '0'
           ignore-unfixed: true
-          vuln-type: 'os,library'
-          scan-type: 'image'
+          vuln-type: os,library
+          scan-type: image
 
-      - name: Upload Trivy Scan Results to GitHub Security Tab
-        uses: github/codeql-action/upload-sarif@v4
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v4.36.0
         if: always() && hashFiles('trivy-results.sarif') != ''
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: ${{ github.workspace }}/trivy-results.sarif
 
-      # Fail only on main/master if critical vulnerabilities are found
-      - name: Check for Critical Vulnerabilities
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-        run: |
-          if [ -f trivy-results.sarif ]; then
-            CRITICAL_COUNT=$(jq -r '.runs[0].results | map(select(.properties.severity == "CRITICAL")) | length' trivy-results.sarif 2>/dev/null || echo 0)
-            if [ "$CRITICAL_COUNT" -gt 0 ]; then
-              echo "❌ Se encontraron vulnerabilidades CRITICAL en la imagen Docker"
-              exit 1
-            fi
-          fi    
+      # Segundo escaneo: es el gate de seguridad. Cualquier vulnerabilidad
+      # CRITICAL, incluso sin fix disponible, devuelve exit code 1.
+      - name: Enforce critical vulnerability gate
+        uses: aquasecurity/trivy-action@0.36.0
+        with:
+          input: ${{ runner.temp }}/${{ inputs.docker-image-name }}.tar
+          format: table
+          severity: CRITICAL
+          exit-code: '1'
+          ignore-unfixed: false
+          vuln-type: os,library
+          scan-type: image
 
-      # ==================== BUILD & PUSH ====================
-      # - name: Log in to Docker Hub
-      #   if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
-      #   uses: docker/login-action@v3
-      #   with:
-      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
-      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      # - name: Build and Push Docker Image
-      #   if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
-      #   uses: docker/build-push-action@v6
-      #   with:
-      #     context: ${{ inputs.service-path }}
-      #     file: ${{ inputs.service-path }}/Dockerfile
-      #     push: true
-      #     tags: |
-      #       ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.docker-image-name }}:${{ github.sha }}
-      #       ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.docker-image-name }}:latest
-      #     # cache-from: type=gha
-      #     # cache-to: type=gha,mode=max
-
-      # ==================== BUILD & PUSH TO AMAZON ECR ====================
-      - name: Configure AWS credentials through GitHub OIDC
+      # Solo una imagen que superó Maven y el gate de Trivy se conserva para
+      # publish. El TAR viaja junto a su checksum para detectar alteraciones.
+      - name: Upload verified image artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        uses: aws-actions/configure-aws-credentials@v6
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: verified-image-${{ inputs.docker-image-name }}
+          path: |
+            ${{ runner.temp }}/${{ inputs.docker-image-name }}.tar
+            ${{ runner.temp }}/${{ inputs.docker-image-name }}.tar.sha256
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+      - name: Publish test report
+        uses: dorny/test-reporter@v1.9.1
+        if: always()
+        with:
+          name: ${{ inputs.service-name }} Tests
+          path: ${{ inputs.service-path }}/target/surefire-reports/*.xml
+          reporter: java-junit
+
+  # Fase 2: se ejecuta exclusivamente tras un push a master y después de verify.
+  # Es el único job que puede solicitar credenciales temporales de AWS por OIDC.
+  publish:
+    name: Publish ${{ inputs.service-name }}
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      image-uri: ${{ steps.publish.outputs.image-uri }}
+      image-digest: ${{ steps.publish.outputs.image-digest }}
+
+    steps:
+      - name: Download verified image artifact
+        uses: actions/download-artifact@v4.3.0
+        with:
+          name: verified-image-${{ inputs.docker-image-name }}
+          path: ${{ runner.temp }}/verified-image
+
+      - name: Verify image artifact checksum
+        # Garantiza que el TAR descargado coincide byte a byte con el escaneado.
+        working-directory: ${{ runner.temp }}/verified-image
+        run: sha256sum --check "${{ inputs.docker-image-name }}.tar.sha256"
+
+      - name: Configure AWS credentials through GitHub OIDC
+        # No existen access keys persistentes: GitHub obtiene una sesión temporal
+        # y además comprueba que pertenece a la cuenta AWS esperada.
+        uses: aws-actions/configure-aws-credentials@v6.2.3
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ vars.AWS_ECR_PUSH_ROLE_ARN }}
@@ -134,25 +172,44 @@ jobs:
           allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
 
       - name: Log in to Amazon ECR
-        id: login_ecr
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        uses: aws-actions/amazon-ecr-login@v2
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2.1.6
 
-      - name: Build and Push Docker Image to Amazon ECR
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        uses: docker/build-push-action@v6
-        with:
-          context: ${{ inputs.service-path }}
-          file: ${{ inputs.service-path }}/Dockerfile
-          push: true
-          tags: |
-            ${{ steps.login_ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_PREFIX }}/${{ inputs.docker-image-name }}:sha-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Load and publish verified image
+        id: publish
+        shell: bash
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY_PREFIX: ${{ vars.ECR_REPOSITORY_PREFIX }}
+          IMAGE_NAME: ${{ inputs.docker-image-name }}
+          IMAGE_TAG: sha-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          IMAGE_TAR: ${{ runner.temp }}/verified-image/${{ inputs.docker-image-name }}.tar
+        run: |
+          set -euo pipefail
 
-      # ==================== TESTING ====================
-      - name: Test Report
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: ${{ inputs.service-name }} Tests
-          path: ${{ inputs.service-path }}/target/surefire-reports/*.xml
-          reporter: java-junit
+          # Se carga el TAR verificado, se etiqueta para ECR y se publica sin rebuild.
+          repository="$ECR_REPOSITORY_PREFIX/$IMAGE_NAME"
+          image_uri="$ECR_REGISTRY/$repository:$IMAGE_TAG"
+
+          docker load --input "$IMAGE_TAR"
+          docker tag "$IMAGE_NAME:ci" "$image_uri"
+          docker push "$image_uri"
+
+          # ECR es la fuente final del digest publicado. Se valida su formato y
+          # se expone como output para trazabilidad o futuros consumidores.
+          image_digest="$(
+            aws ecr describe-images \
+              --repository-name "$repository" \
+              --image-ids "imageTag=$IMAGE_TAG" \
+              --query 'imageDetails[0].imageDigest' \
+              --output text
+          )"
+
+          if [[ ! "$image_digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "ERROR: ECR did not return a valid image digest." >&2
+            exit 1
+          fi
+
+          echo "image-uri=$image_uri" >> "$GITHUB_OUTPUT"
+          echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
+          echo "Published $image_uri@$image_digest" >> "$GITHUB_STEP_SUMMARY"

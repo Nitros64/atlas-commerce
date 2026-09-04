@@ -74,6 +74,8 @@ Local:
 
 Local validation requires the ignored
 platform/helm/atlas-commerce/values/secrets-local.yaml file.
+CI overrides LOCAL_SECRETS_FILE with the tracked, non-sensitive
+values/secrets-local.example.yaml fixture.
 
 Dev:
 
