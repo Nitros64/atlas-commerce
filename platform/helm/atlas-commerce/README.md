@@ -14,7 +14,7 @@ Only these profiles are currently supported:
   local-lite overlay.
 - dev: component values followed by values.dev.yaml and
   values/images.dev.yaml. Runtime endpoints, secret identifiers and the ECR
-  registry are supplied by the dev validation/deployment scripts.
+  registry are supplied by the Argo CD Application.
 
 QA and production are roadmap placeholders. Their values files are intentionally
 not part of the supported or validated matrix.
@@ -55,10 +55,9 @@ Dev appends:
 18. values/images.dev.yaml
 
 The image overlay stores portable repository paths and immutable tags. Dev
-scripts set global.imageRegistry. Template and validation scripts use a
-deterministic placeholder ECR registry unless ECR_REGISTRY is provided.
-deploy-dev.sh derives the real registry from the active AWS account and
-AWS_REGION, both of which can also be supplied explicitly.
+template and validation scripts use a deterministic placeholder ECR registry
+unless ECR_REGISTRY is provided. Argo CD supplies the real registry and
+runtime endpoints from its Application values.
 
 `values/local-lite.yaml` is intentionally a scale-to-zero overlay. It keeps
 the payment, shipping and audit Services, ConfigMaps and Secrets rendered, but
@@ -67,6 +66,22 @@ sets their Deployment replicas to zero; it does not remove those components.
 DEV explicitly disables the nginx Ingress because this repository does not
 install an ingress controller. Use a local port-forward to the ClusterIP
 gateway as documented in `docs/runbooks/atlas-dev-eks-runtime.md`.
+
+## DEV deployment ownership
+
+Argo CD is the only supported deploy owner for `atlas-dev`. It reads this chart
+from Git and performs the Helm render. CI and the Helm scripts do not deploy to
+the cluster.
+
+`scripts/helm/deploy-dev.sh` is retained only for controlled troubleshooting.
+It refuses to run unless `ALLOW_DIRECT_HELM_DEV=true`, and it also refuses to
+run while `Application/atlas-dev` exists. The normal flow is:
+
+    kubectl apply -f platform/argocd/dev/app-project.yaml
+    kubectl apply -f platform/argocd/dev/application.yaml
+    argocd app sync atlas-dev
+
+The full boundary is recorded in `docs/adr/0001-platform-ownership.md`.
 
 ## Validation
 
