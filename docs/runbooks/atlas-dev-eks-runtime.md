@@ -2,6 +2,10 @@
 
 Este runbook explica cómo levantar, validar y destruir el entorno **Atlas Commerce DEV** en AWS usando el flujo automatizado del repositorio.
 
+El límite de ownership está definido en
+`docs/adr/0001-platform-ownership.md`: Argo CD es el único owner de los
+workloads DEV y Helm directo queda reservado para troubleshooting.
+
 Atlas DEV usa:
 
 - Terraform para infraestructura AWS.
@@ -65,11 +69,25 @@ Este script ejecuta el ciclo completo:
 6. Siembra el secret platform en AWS Secrets Manager.
 7. Escala el nodegroup DEV a 3 nodos.
 8. Valida el render de Helm DEV.
-9. Despliega Atlas con Helm.
-10. Ejecuta el chequeo estructural del runtime (rollouts, pods y configuración).
+9. Instala Argo CD y valida sus manifests.
+10. Aplica el `AppProject` de DEV.
+11. Aplica la `Application` solo si ya no contiene placeholders.
 
-La prueba HTTP funcional se ejecuta manualmente después, mediante el
-port-forward descrito en la sección 10.
+El script nunca ejecuta `helm upgrade` para Atlas. Si la Application aún
+contiene `REPLACE_WITH_...`, termina el bootstrap sin aplicarla y muestra los
+dos comandos pendientes. Después de resolver esos valores mediante Git:
+
+```bash
+kubectl apply -f platform/argocd/dev/application.yaml
+argocd app sync atlas-dev
+```
+
+Tras el sync, ejecutar el chequeo estructural y la prueba HTTP funcional:
+
+```bash
+./scripts/k8s/check-dev-runtime.sh
+bash scripts/smoke/dev-smoke.sh
+```
 
 ### Validar runtime
 
@@ -97,7 +115,7 @@ Valida:
 
 El script intenta limpiar:
 
-- Helm release `atlas`.
+- Argo CD `Application/atlas-dev` y su `AppProject` antes de Terraform.
 - External Secrets Operator.
 - PVCs/PVs.
 - Namespaces.
@@ -148,10 +166,12 @@ scripts/aws/seed-dev-platform-secret.sh
 ### Helm
 
 ```text
-scripts/helm/deploy-dev.sh
 scripts/helm/install-external-secrets-dev.sh
 scripts/helm/validate-dev.sh
 ```
+
+`scripts/helm/deploy-dev.sh` no forma parte del camino normal: está protegido
+para troubleshooting y no funciona mientras exista `Application/atlas-dev`.
 
 ### Kubernetes
 
@@ -626,9 +646,13 @@ aws eks update-kubeconfig \
 
 ### Deploy Helm manual
 
+Solo para troubleshooting después de eliminar la Application:
+
 ```bash
-./scripts/helm/deploy-dev.sh
+ALLOW_DIRECT_HELM_DEV=true ./scripts/helm/deploy-dev.sh
 ```
+
+No usar este comando como alternativa habitual a Argo CD.
 
 ### Destroy manual
 

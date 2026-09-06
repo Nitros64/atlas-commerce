@@ -4,6 +4,10 @@ This directory owns the single Argo CD `Application` and restricted
 `AppProject` for Atlas DEV. The application renders the existing Helm chart;
 Helm remains the source of truth for Kubernetes resources.
 
+Argo CD is the only supported writer for application workloads in `atlas-dev`.
+Terraform owns AWS resources, bootstrap scripts own controller installation,
+and CI never accesses the cluster. See `docs/adr/0001-platform-ownership.md`.
+
 ## Prerequisites
 
 - A kubeconfig for the DEV cluster available only to the operator.

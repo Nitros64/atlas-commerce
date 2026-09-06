@@ -2,6 +2,10 @@
 
 This runbook explains how to create, validate, and destroy the **Atlas Commerce DEV** environment on AWS using the automated workflow provided by this repository.
 
+The ownership boundary is defined in `docs/adr/0001-platform-ownership.md`:
+Argo CD is the only owner of DEV workloads and direct Helm is reserved for
+troubleshooting.
+
 Atlas DEV uses:
 
 - Terraform for AWS infrastructure.
@@ -10,7 +14,7 @@ Atlas DEV uses:
 - External ElastiCache Redis with TLS.
 - AWS Secrets Manager.
 - External Secrets Operator.
-- Helm to deploy Atlas Commerce.
+- Argo CD using Helm to render Atlas Commerce.
 - Kafka inside the cluster with an EBS-backed PVC.
 
 > This is a development environment and may generate AWS costs. Destroy it when you finish testing.
@@ -65,8 +69,18 @@ This script runs the full lifecycle:
 6. Seeds the platform secret in AWS Secrets Manager.
 7. Scales the DEV node group to 3 nodes.
 8. Validates the DEV Helm render.
-9. Deploys Atlas with Helm.
-10. Runs the runtime smoke check.
+9. Installs Argo CD and validates its manifests.
+10. Applies the DEV `AppProject`.
+11. Applies the `Application` only when its placeholders have been resolved.
+
+The script never runs `helm upgrade` for Atlas. If the Application still
+contains `REPLACE_WITH_...`, it finishes the bootstrap without applying it and
+prints the two remaining manual commands:
+
+```bash
+kubectl apply -f platform/argocd/dev/application.yaml
+argocd app sync atlas-dev
+```
 
 ### Validate the runtime
 
@@ -94,7 +108,7 @@ This validates:
 
 The script attempts to clean up:
 
-- Helm release `atlas`.
+- Argo CD `Application/atlas-dev` and its `AppProject` before Terraform.
 - External Secrets Operator.
 - PVCs/PVs.
 - Namespaces.
@@ -145,10 +159,12 @@ scripts/aws/seed-dev-platform-secret.sh
 ### Helm
 
 ```text
-scripts/helm/deploy-dev.sh
 scripts/helm/install-external-secrets-dev.sh
 scripts/helm/validate-dev.sh
 ```
+
+`scripts/helm/deploy-dev.sh` is not part of the normal path. It is guarded for
+troubleshooting and refuses to run while `Application/atlas-dev` exists.
 
 ### Kubernetes
 
@@ -622,9 +638,13 @@ aws eks update-kubeconfig \
 
 ### Manual Helm deploy
 
+Only for troubleshooting after removing the Application:
+
 ```bash
-./scripts/helm/deploy-dev.sh
+ALLOW_DIRECT_HELM_DEV=true ./scripts/helm/deploy-dev.sh
 ```
+
+Do not use this as the normal alternative to Argo CD.
 
 ### Manual destroy
 

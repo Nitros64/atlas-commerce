@@ -5,6 +5,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 ARGOCD_DIR="$PROJECT_ROOT/platform/argocd/dev"
 CHART_DIR="$PROJECT_ROOT/platform/helm/atlas-commerce"
+CREATE_SCRIPT="$PROJECT_ROOT/scripts/aws/create-dev-now.sh"
+DESTROY_SCRIPT="$PROJECT_ROOT/scripts/aws/destroy-dev-now.sh"
+DIRECT_HELM_SCRIPT="$PROJECT_ROOT/scripts/helm/deploy-dev.sh"
 ARGO_RENDER="${TMPDIR:-/tmp}/atlas-argocd-dev.yaml"
 HELM_RENDER="${TMPDIR:-/tmp}/atlas-argocd-helm.yaml"
 
@@ -129,4 +132,39 @@ grep -q 'argocd.argoproj.io/hook-delete-policy: BeforeHookCreation' "$HELM_RENDE
 grep -q 'name: wait-for-bootstrap-secrets' "$HELM_RENDER"
 grep -q 'Timed out waiting for Secret' "$HELM_RENDER"
 
-echo "Validated one atlas-dev Application, one restricted AppProject and Helm sync waves offline."
+if grep -Eq 'scripts/helm/deploy-dev.sh|helm[[:space:]]+upgrade' "$CREATE_SCRIPT"; then
+  echo "ERROR: create-dev-now.sh must not deploy Atlas directly with Helm." >&2
+  exit 1
+fi
+
+grep -q 'scripts/argocd/install-argocd-dev.sh' "$CREATE_SCRIPT" || {
+  echo "ERROR: create-dev-now.sh must bootstrap Argo CD." >&2
+  exit 1
+}
+
+application_delete_line="$(grep -n -m 1 'kubectl delete application.argoproj.io atlas-dev' "$DESTROY_SCRIPT" | cut -d: -f1)"
+terraform_destroy_line="$(grep -n -m 1 'terraform -chdir=.* destroy' "$DESTROY_SCRIPT" | cut -d: -f1)"
+
+if [[ -z "$application_delete_line" \
+  || -z "$terraform_destroy_line" \
+  || "$application_delete_line" -ge "$terraform_destroy_line" ]]; then
+  echo "ERROR: destroy must delete atlas-dev before terraform destroy." >&2
+  exit 1
+fi
+
+if grep -q 'helm uninstall atlas' "$DESTROY_SCRIPT"; then
+  echo "ERROR: destroy must not treat an Argo CD render as a Helm release." >&2
+  exit 1
+fi
+
+grep -q 'ALLOW_DIRECT_HELM_DEV' "$DIRECT_HELM_SCRIPT" || {
+  echo "ERROR: direct DEV Helm troubleshooting must require an explicit opt-in." >&2
+  exit 1
+}
+
+grep -q 'kubectl get application.argoproj.io atlas-dev' "$DIRECT_HELM_SCRIPT" || {
+  echo "ERROR: direct DEV Helm must refuse competing Argo CD ownership." >&2
+  exit 1
+}
+
+echo "Validated atlas-dev manifests, sync waves and ownership rules offline."

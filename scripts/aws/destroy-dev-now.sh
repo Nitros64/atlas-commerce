@@ -20,11 +20,37 @@ cleanup_kubernetes() {
     --region "$REGION" \
     --name "$CLUSTER_NAME" >/dev/null
 
-  if kubectl get namespace atlas >/dev/null 2>&1; then
-    echo ""
-    echo "Uninstalling Atlas Helm release..."
-    helm uninstall atlas -n atlas --wait --timeout 10m || true
+  if kubectl get crd applications.argoproj.io >/dev/null 2>&1; then
+    if kubectl get application.argoproj.io atlas-dev -n argocd >/dev/null 2>&1; then
+      echo ""
+      echo "Deleting the Argo CD atlas-dev Application before its workloads..."
+      kubectl delete application.argoproj.io atlas-dev -n argocd --wait=false
 
+      if ! kubectl wait \
+        --for=delete application.argoproj.io/atlas-dev \
+        -n argocd \
+        --timeout=5m; then
+        echo "ERROR: atlas-dev Application deletion is blocked; refusing to destroy AWS infrastructure." >&2
+        kubectl get application.argoproj.io atlas-dev \
+          -n argocd \
+          -o jsonpath='{.metadata.finalizers}' || true
+        echo "" >&2
+        return 1
+      fi
+    else
+      echo "atlas-dev Application not found. Skipping Application deletion."
+    fi
+
+    kubectl delete appproject.argoproj.io atlas-dev \
+      -n argocd \
+      --ignore-not-found \
+      --wait=true \
+      --timeout=5m
+  else
+    echo "Argo CD Application CRD not found. Skipping Application cleanup."
+  fi
+
+  if kubectl get namespace atlas >/dev/null 2>&1; then
     echo ""
     echo "Deleting remaining PVCs in atlas namespace..."
     kubectl delete pvc --all -n atlas \

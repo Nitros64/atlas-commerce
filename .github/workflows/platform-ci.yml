@@ -13,6 +13,7 @@ on:
       - "scripts/argocd/**"
       - "scripts/gitops/**"
       - "scripts/smoke/**"
+      - "scripts/aws/**"
       - ".github/workflows/*-service-ci.yml"
       - ".github/workflows/promote-dev-image.yml"
       - ".github/workflows/platform-ci.yml"
@@ -26,6 +27,7 @@ on:
       - "scripts/argocd/**"
       - "scripts/gitops/**"
       - "scripts/smoke/**"
+      - "scripts/aws/**"
       - ".github/workflows/*-service-ci.yml"
       - ".github/workflows/promote-dev-image.yml"
       - ".github/workflows/platform-ci.yml"
@@ -94,6 +96,7 @@ jobs:
             --image-tag sha-0000000000000000000000000000000000000000-1-1 \
             --check
 
-      - name: Validate DEV smoke test syntax
+      - name: Validate platform shell syntax
+        # Parsea los scripts sin ejecutar AWS, kubectl ni ningún cambio remoto.
         shell: bash
-        run: bash -n scripts/smoke/dev-smoke.sh
+        run: bash -n scripts/aws/*.sh scripts/argocd/*.sh scripts/smoke/*.sh

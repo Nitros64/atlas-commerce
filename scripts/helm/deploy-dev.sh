@@ -9,6 +9,14 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 CHART_DIR="$PROJECT_ROOT/platform/helm/atlas-commerce"
 TERRAFORM_DIR="$PROJECT_ROOT/platform/terraform/live/aws/dev"
 AWS_REGION="${AWS_REGION:-eu-central-1}"
+
+if [[ "${ALLOW_DIRECT_HELM_DEV:-false}" != "true" ]]; then
+  echo "ERROR: Argo CD owns atlas-dev; direct Helm deployment is disabled by default." >&2
+  echo "For controlled troubleshooting only, remove the atlas-dev Application" >&2
+  echo "and rerun with ALLOW_DIRECT_HELM_DEV=true." >&2
+  exit 1
+fi
+
 AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:-$(aws sts get-caller-identity --query Account --output text)}"
 ECR_REGISTRY="${ECR_REGISTRY:-$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com}"
 
@@ -58,6 +66,11 @@ echo "Platform secret: $PLATFORM_SECRET_NAME"
 echo "RDS admin secret: $RDS_MASTER_SECRET_ARN"
 echo "ECR registry:     $ECR_REGISTRY"
 echo ""
+
+if kubectl get application.argoproj.io atlas-dev -n argocd >/dev/null 2>&1; then
+  echo "ERROR: atlas-dev Application still exists; direct Helm would create competing ownership." >&2
+  exit 1
+fi
 
 kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 
