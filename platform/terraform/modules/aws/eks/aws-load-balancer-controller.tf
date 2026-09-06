@@ -1,7 +1,7 @@
 # Build the IRSA trust policy for the AWS Load Balancer Controller service account.
 data "aws_iam_policy_document" "aws_load_balancer_controller_assume_role" {
-  # Create this policy only when IRSA is enabled.
-  count = var.enable_irsa ? 1 : 0
+  # Do not create unused IAM when the controller is not installed.
+  count = var.enable_irsa && var.enable_aws_load_balancer_controller_irsa ? 1 : 0
 
   statement {
     # Allow the Kubernetes service account to request temporary AWS credentials.
@@ -34,8 +34,8 @@ data "aws_iam_policy_document" "aws_load_balancer_controller_assume_role" {
 
 # Store the official IAM policy pinned to controller version 3.4.0.
 resource "aws_iam_policy" "aws_load_balancer_controller" {
-  # Create the policy only when IRSA is enabled.
-  count = var.enable_irsa ? 1 : 0
+  # Do not create unused IAM when the controller is not installed.
+  count = var.enable_irsa && var.enable_aws_load_balancer_controller_irsa ? 1 : 0
 
   # Keep the policy name environment-specific.
   name = "${local.name_prefix}-aws-load-balancer-controller"
@@ -59,8 +59,8 @@ resource "aws_iam_policy" "aws_load_balancer_controller" {
 
 # Create the IAM role assumed only by the controller service account.
 resource "aws_iam_role" "aws_load_balancer_controller" {
-  # Create the role only when IRSA is enabled.
-  count = var.enable_irsa ? 1 : 0
+  # Do not create unused IAM when the controller is not installed.
+  count = var.enable_irsa && var.enable_aws_load_balancer_controller_irsa ? 1 : 0
 
   # Use a stable, readable IAM role name.
   name = "${local.name_prefix}-aws-load-balancer-controller-role"
@@ -79,8 +79,8 @@ resource "aws_iam_role" "aws_load_balancer_controller" {
 
 # Attach the controller permissions to its dedicated IRSA role.
 resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller" {
-  # Create this attachment only when IRSA is enabled.
-  count = var.enable_irsa ? 1 : 0
+  # Do not create unused IAM when the controller is not installed.
+  count = var.enable_irsa && var.enable_aws_load_balancer_controller_irsa ? 1 : 0
 
   # Attach the policy to the dedicated controller role.
   role = aws_iam_role.aws_load_balancer_controller[0].name

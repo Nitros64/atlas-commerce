@@ -22,12 +22,12 @@ variable "eks_node_capacity_type" {
 
 variable "eks_node_min_size" {
   type    = number
-  default = 2
+  default = 3
 }
 
 variable "eks_node_desired_size" {
   type    = number
-  default = 2
+  default = 3
 }
 
 variable "eks_node_max_size" {

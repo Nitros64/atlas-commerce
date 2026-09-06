@@ -74,6 +74,12 @@ variable "enable_irsa" {
   default     = true
 }
 
+variable "enable_aws_load_balancer_controller_irsa" {
+  description = "Whether to create IAM resources for AWS Load Balancer Controller."
+  type        = bool
+  default     = false
+}
+
 # Define the managed node group name.
 variable "node_group_name" {
   description = "Name assigned to the default EKS managed node group."

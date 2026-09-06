@@ -30,3 +30,10 @@ enable_nat_gateway = false
 additional_tags = {
   Purpose = "development"
 }
+
+# Three t3.medium nodes provide 12 GiB raw memory. The Helm DEV render requests
+# about 7.25 GiB before EKS system pods, Argo CD and External Secrets overhead.
+eks_node_instance_types = ["t3.medium"]
+eks_node_min_size       = 3
+eks_node_desired_size   = 3
+eks_node_max_size       = 3

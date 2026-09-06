@@ -3,8 +3,6 @@ set -euo pipefail
 
 REGION="eu-central-1"
 CLUSTER_NAME="atlas-commerce-dev"
-NODEGROUP_NAME="default"
-DESIRED_NODES="3"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -22,30 +20,6 @@ require_command() {
     echo "ERROR: required command not found: $1" >&2
     exit 1
   fi
-}
-
-wait_for_ready_nodes() {
-  echo ""
-  echo "Waiting for at least $DESIRED_NODES Ready nodes..."
-
-  for i in {1..40}; do
-    READY_COUNT="$(
-      kubectl get nodes --no-headers 2>/dev/null \
-        | awk '$2 == "Ready" { count++ } END { print count+0 }'
-    )"
-
-    echo "Ready nodes: $READY_COUNT/$DESIRED_NODES"
-
-    if [[ "$READY_COUNT" -ge "$DESIRED_NODES" ]]; then
-      return
-    fi
-
-    sleep 15
-  done
-
-  echo "ERROR: expected $DESIRED_NODES Ready nodes, but timeout was reached." >&2
-  kubectl get nodes -o wide || true
-  exit 1
 }
 
 echo "Checking required tools..."
@@ -119,21 +93,8 @@ echo "Seeding DEV platform secret..."
 "$PROJECT_ROOT/scripts/aws/seed-dev-platform-secret.sh"
 
 echo ""
-echo "Scaling EKS nodegroup before the Atlas Argo CD sync..."
-aws eks update-nodegroup-config \
-  --region "$REGION" \
-  --cluster-name "$CLUSTER_NAME" \
-  --nodegroup-name "$NODEGROUP_NAME" \
-  --scaling-config minSize=1,maxSize="$DESIRED_NODES",desiredSize="$DESIRED_NODES"
-
-echo ""
-echo "Waiting for nodegroup to become active..."
-aws eks wait nodegroup-active \
-  --region "$REGION" \
-  --cluster-name "$CLUSTER_NAME" \
-  --nodegroup-name "$NODEGROUP_NAME"
-
-wait_for_ready_nodes
+echo "EKS node capacity is managed by Terraform; no AWS CLI scaling is applied."
+kubectl get nodes -o wide
 
 echo ""
 echo "Validating Helm DEV render..."
