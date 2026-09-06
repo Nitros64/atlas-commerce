@@ -17,11 +17,16 @@ Cada tipo de recurso tiene un único owner operativo:
 
 | Owner | Responsabilidad |
 | --- | --- |
-| Terraform | AWS, EKS, IAM, RDS, ElastiCache/Redis, Secrets Manager y buckets. |
+| Terraform | AWS, EKS y capacidad del node group, IAM, RDS, ElastiCache/Redis, Secrets Manager y buckets. |
 | Scripts de bootstrap | Kubeconfig, External Secrets Operator, Argo CD y registro inicial de `AppProject`/`Application`. |
 | Argo CD | Workloads y recursos de aplicación del namespace `atlas` para `atlas-dev`. |
 | Helm | Motor de render de Argo CD y herramienta offline de lint, template y debug. |
 | CI | Verifica código/Helm, publica imágenes y abre PRs de promoción; no accede al cluster. |
+
+La capacidad DEV se declara en Terraform (`min = desired = max = 3` nodos
+`t3.medium`). Los scripts de bootstrap no escalan EKS mediante AWS CLI. El CI de
+Terraform solo ejecuta formato e inicialización sin backend/validación estática;
+no recibe credenciales AWS ni ejecuta plan, apply o destroy.
 
 `platform/helm/atlas-commerce` es la fuente de manifests. Argo CD lee el chart
 y el estado deseado desde Git. Publicar una imagen no despliega: una promoción

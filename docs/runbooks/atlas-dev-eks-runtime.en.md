@@ -67,7 +67,7 @@ This script runs the full lifecycle:
 4. Updates `kubeconfig`.
 5. Installs External Secrets Operator.
 6. Seeds the platform secret in AWS Secrets Manager.
-7. Scales the DEV node group to 3 nodes.
+7. Checks the 3-node group created by Terraform; it does not resize it by CLI.
 8. Validates the DEV Helm render.
 9. Installs Argo CD and validates its manifests.
 10. Applies the DEV `AppProject`.
@@ -397,12 +397,14 @@ Insufficient memory
 Solution:
 
 ```bash
-aws eks update-nodegroup-config \
-  --region eu-central-1 \
-  --cluster-name atlas-commerce-dev \
-  --nodegroup-name default \
-  --scaling-config minSize=1,maxSize=3,desiredSize=3
+cd platform/terraform/live/aws/dev
+terraform plan
+terraform apply
 ```
+
+Terraform owns capacity. Check that the local `terraform.tfvars` does not
+override the `3/3/3` contract from `terraform.tfvars.example`; do not repair
+drift with `aws eks update-nodegroup-config`.
 
 ---
 

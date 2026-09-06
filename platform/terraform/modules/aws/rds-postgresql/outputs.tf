@@ -20,7 +20,7 @@ output "arn" {
 # The password itself is never exposed through Terraform outputs.
 output "master_user_secret_arn" {
   description = "ARN of the Secrets Manager secret managed by RDS for the master user."
-  value       = try(
+  value = try(
     aws_db_instance.main.master_user_secret[0].secret_arn,
     null
   )

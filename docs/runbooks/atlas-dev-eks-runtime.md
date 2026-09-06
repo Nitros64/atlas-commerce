@@ -67,7 +67,7 @@ Este script ejecuta el ciclo completo:
 4. Actualiza `kubeconfig`.
 5. Instala External Secrets Operator.
 6. Siembra el secret platform en AWS Secrets Manager.
-7. Escala el nodegroup DEV a 3 nodos.
+7. Comprueba el nodegroup de 3 nodos creado por Terraform; no lo escala por CLI.
 8. Valida el render de Helm DEV.
 9. Instala Argo CD y valida sus manifests.
 10. Aplica el `AppProject` de DEV.
@@ -405,12 +405,14 @@ Insufficient memory
 Solución:
 
 ```bash
-aws eks update-nodegroup-config \
-  --region eu-central-1 \
-  --cluster-name atlas-commerce-dev \
-  --nodegroup-name default \
-  --scaling-config minSize=1,maxSize=3,desiredSize=3
+cd platform/terraform/live/aws/dev
+terraform plan
+terraform apply
 ```
+
+La capacidad pertenece a Terraform. Revisa que el `terraform.tfvars` local no
+sobrescriba el contrato `3/3/3` de `terraform.tfvars.example`; no corrijas el
+drift con `aws eks update-nodegroup-config`.
 
 ---
 

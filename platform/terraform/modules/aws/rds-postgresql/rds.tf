@@ -35,17 +35,17 @@ resource "aws_db_instance" "main" {
   ]
 
   # Configure availability and recovery behavior.
-  multi_az               = var.multi_az
+  multi_az                = var.multi_az
   backup_retention_period = var.backup_retention_period_days
   copy_tags_to_snapshot   = true
 
   # Keep dev destruction inexpensive and explicit.
-  deletion_protection      = var.deletion_protection
-  skip_final_snapshot      = var.skip_final_snapshot
+  deletion_protection       = var.deletion_protection
+  skip_final_snapshot       = var.skip_final_snapshot
   final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.identifier}-final"
 
   # Allow minor PostgreSQL patch upgrades, but never automatic major upgrades.
-  auto_minor_version_upgrade = true
+  auto_minor_version_upgrade  = true
   allow_major_version_upgrade = false
 
   tags = merge(

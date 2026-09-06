@@ -7,7 +7,7 @@ output "primary_endpoint_address" {
 # Expose the reader endpoint for future read-only workloads or replicas.
 output "reader_endpoint_address" {
   description = "Reader Redis endpoint hostname. It may be empty when no replicas exist."
-  value       = try(
+  value = try(
     aws_elasticache_replication_group.main.reader_endpoint_address,
     null
   )

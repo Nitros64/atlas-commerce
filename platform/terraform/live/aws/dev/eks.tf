@@ -22,7 +22,8 @@ module "eks" {
   # Keep CloudWatch control-plane logs disabled for now to avoid extra cost.
   enabled_cluster_log_types = []
 
-  enable_irsa = true
+  enable_irsa                              = true
+  enable_aws_load_balancer_controller_irsa = false
 
   node_group_name     = "default"
   node_instance_types = var.eks_node_instance_types
@@ -35,6 +36,7 @@ module "eks" {
 
   additional_tags = var.additional_tags
 
-  enable_velero_irsa       = true
+  # Velero is roadmap only; no controller is installed in DEV.
+  enable_velero_irsa       = false
   velero_backup_bucket_arn = module.velero_backup.bucket_arn
 }
